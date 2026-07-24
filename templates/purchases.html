@@ -1,0 +1,256 @@
+<div id="purchases-main-panel" class="main-panel" style="display:none;">
+
+          <!-- Purchase Entry -->
+          <div id="purchase-panel" class="sub-panel ">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-plus" aria-hidden="true"></i> Add new purchase</div>
+
+              <!-- Purchase Mode Sub-tabs -->
+              <div class="sub-tabs" style="margin-bottom:1rem;">
+                <button class="sub-tab active" id="purchase-mode-cash" onclick="setPurchaseMode('cash')"><i class="ti ti-coin"></i> Cash Purchase</button>
+                <button class="sub-tab" id="purchase-mode-credit" onclick="setPurchaseMode('credit')"><i class="ti ti-credit-card"></i> Credit Purchase</button>
+              </div>
+
+              <!-- HEADER -->
+              <div class="purchase-header-section">
+                <div class="purchase-header-label"><i class="ti ti-building-store"></i> Purchase Header</div>
+                <div class="fields" style="margin-bottom:0">
+                  <div class="field"><label>Party name</label><input id="f-party" type="text" placeholder="e.g. Ravi Traders" list="party-datalist" oninput="onPartyInput(this.value)" autocomplete="off"/><datalist id="party-datalist"></datalist></div>
+                  <div class="field"><label>Date</label><input id="f-purchase-date" type="date"/></div>
+                  <div class="field"><label>Seller No. <span style="color:var(--color-text-tertiary)">(optional)</span></label><input id="f-seller-no" type="text" placeholder="e.g. 9876543210"/></div>
+                  <div class="field"><label>Invoice No. <span style="color:var(--color-text-tertiary)">(optional)</span></label>
+                    <input id="f-invoice-no" type="text" placeholder="Auto-generated" autocomplete="off" />
+                  </div>
+                  <div class="field" style="grid-column: span 2"><label>Seller Address <span style="color:var(--color-text-tertiary)">(optional)</span></label><input id="f-seller-address" type="text" placeholder="e.g. 123, MG Road, Mumbai"/></div>
+                  <div class="field"><label>Seller GST No. <span style="color:var(--color-text-tertiary)">(optional)</span></label><input id="f-gst-no" type="text" placeholder="e.g. 27AAPFU0939F1ZV"/></div>
+                </div>
+              </div>
+              <!-- ITEMS -->
+              <div class="purchase-items-section">
+                <div class="purchase-items-label"><i class="ti ti-packages"></i> Items</div>
+                <div id="items-container"></div>
+                <button class="add-item-btn" onclick="addItemRow()"><i class="ti ti-plus" style="font-size:16px"></i> Add another item</button>
+              </div>
+              <!-- GST -->
+              <div class="purchase-gst-section">
+                <div class="purchase-gst-label"><i class="ti ti-receipt-tax"></i> GST (Common — applies to all items)</div>
+                <div class="fields" style="margin-bottom:0">
+                  <div class="field"><label>CGST (%)</label><input id="g-cgst" type="number" placeholder="0" min="0" step="0.01" value="0" oninput="recalcGSTAll()"/></div>
+                  <div class="field"><label>SGST (%)</label><input id="g-sgst" type="number" placeholder="0" min="0" step="0.01" value="0" oninput="recalcGSTAll()"/></div>
+                  <div class="field"><label>IGST (%)</label><input id="g-igst" type="number" placeholder="0" min="0" step="0.01" value="0" oninput="recalcGSTAll()"/></div>
+                  <div class="field" style="display:flex;align-items:flex-end;padding-bottom:2px"><span style="font-size:12px;color:var(--color-text-tertiary)">Total GST rate: <span id="g-total-rate" style="color:#a5b4fc;font-weight:600">0%</span></span></div>
+                </div>
+              </div>
+              <!-- DISCOUNT (from supplier — affects cost only, not sale price) -->
+              <div class="purchase-discount-section">
+                <div class="purchase-discount-label"><i class="ti ti-discount-2"></i> Discount from Supplier <span style="color:var(--color-text-tertiary)">(optional)</span></div>
+                <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--color-background-secondary);border-radius:8px">
+                  <div style="position:relative;display:flex;align-items:center">
+                    <input id="f-purchase-discount" type="number" placeholder="0" min="0" max="100" step="0.1" autocomplete="off" oninput="onPurchaseDiscountInput()"
+                      style="width:100px;padding:8px 32px 8px 12px;border-radius:8px;border:1px solid var(--color-border-secondary);background:var(--color-background-tertiary);color:var(--color-text-primary);font-size:15px;font-weight:600;outline:none"/>
+                    <span style="position:absolute;right:10px;font-size:13px;color:var(--color-text-tertiary);pointer-events:none">%</span>
+                  </div>
+                  <div id="purchase-discount-preview" style="flex:1;font-size:13px;color:var(--color-text-secondary)">Reduces the purchase cost / amount payable to the party only — your sale price stays based on the price you entered per item.</div>
+                </div>
+              </div>
+              <!-- TOTALS -->
+              <div class="grand-calcs">
+                <span class="calc-chip">Buy total: <span id="c-buytotal">₹0.00</span></span>
+                <span class="sep">·</span>
+                <span class="calc-chip">With GST: <span id="c-gsttotal">₹0.00</span></span>
+                <span class="sep">·</span>
+                <span class="calc-chip">Sell total: <span id="c-selltotal">₹0.00</span></span>
+                <span class="sep">·</span>
+                <span class="calc-chip profit-chip"><i class="ti ti-trending-up" aria-hidden="true"></i> Profit: <span id="c-profit">₹0.00</span></span>
+              </div>
+              <div class="btn-row">
+                <button class="add-btn" onclick="addEntry()"><i class="ti ti-check" aria-hidden="true"></i> Save Purchase</button>
+                <button class="filter-toggle" onclick="switchType('analyze')" style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;font-size:13px"><i class="ti ti-chart-bar"></i> Reports</button>
+              </div>
+            </div>
+
+            <!-- Barcodes of last saved purchase -->
+            <div id="purchase-saved-barcodes" style="display:none;margin-top:1.5rem;background:var(--color-background-secondary);border:1px solid var(--color-border-secondary);border-radius:12px;padding:1.25rem"></div>
+
+            <!-- Purchase list table removed: entries are visible in Reports > Purchase & Sales reports -->
+            <!-- Hidden elements to keep JS renderPurchase() working without errors.
+                 NOTE: the stat elements (s-entries/s-qty/s-purchase/s-sell/s-profit) were
+                 REMOVED from here — they had the same IDs as the real, visible stat boxes
+                 in reports.html, so updateStats() was updating these invisible duplicates
+                 instead of the real ones, and Reports page always showed 0. -->
+            <div style="display:none">
+              <table><tbody id="tbody"></tbody><tfoot id="tfoot"></tfoot></table>
+              <div id="empty-msg"></div>
+              <div id="count-badge"></div>
+            </div>
+          </div>
+
+          <!-- Purchase Return -->
+          <div id="purchase-return-panel" class="sub-panel " style="display:none;">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-rotate-2"></i> Purchase return entry</div>
+              <div class="return-step-label">Step 1 — Find the original bill</div>
+              <div class="return-search-row">
+                <input id="pr-search-input" type="text" placeholder="Search invoice no. or party name..." onkeydown="if(event.key==='Enter')searchPurchaseInvoices()"/>
+                <button class="return-search-btn" onclick="searchPurchaseInvoices()"><i class="ti ti-search"></i> Search</button>
+              </div>
+              <div id="pr-invoice-results"></div>
+              <div id="pr-items-section" style="display:none">
+                <div class="return-step-label" style="margin-top:1rem">Step 2 — Select items to return</div>
+                <div class="return-items-header"><span></span><span>Item</span><span>Size</span><span>Available</span><span>Return qty</span></div>
+                <div id="pr-items-list"></div>
+                <div style="margin-top:1rem"><div class="return-step-label">Reason (applies to all selected items)</div><input id="pr-reason" type="text" class="return-reason-input" placeholder="e.g. Damaged goods, wrong size shipped..."/></div>
+                <div class="return-save-row">
+                  <button class="filter-apply" onclick="savePurchaseReturnBill()"><i class="ti ti-check"></i> Save return bill</button>
+                  <span class="return-save-summary" id="pr-summary">No items selected</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Purchase Bills Date Wise -->
+          <div id="purchase-bills-panel" class="sub-panel" style="display:none;">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-file-invoice"></i> Purchase bills (date wise)</div>
+              <div class="sub-tabs" style="margin-bottom:1rem">
+                <button class="sub-tab active" id="pb-mode-cash" onclick="switchPurchaseBillsMode('cash')"><i class="ti ti-coin"></i> Cash</button>
+                <button class="sub-tab" id="pb-mode-credit" onclick="switchPurchaseBillsMode('credit')"><i class="ti ti-credit-card"></i> Credited</button>
+              </div>
+              <div class="return-search-row">
+                <div class="field" style="flex:1;margin-bottom:0"><label>Date from</label><input id="pb-date-from" type="date"/></div>
+                <div class="field" style="flex:1;margin-bottom:0"><label>Date to</label><input id="pb-date-to" type="date"/></div>
+                <button class="return-search-btn" style="height:38px" onclick="applyPurchaseBillsFilter()"><i class="ti ti-filter"></i> Apply</button>
+                <button class="return-search-btn" style="height:38px" onclick="resetPurchaseBillsFilter()"><i class="ti ti-refresh"></i> Reset</button>
+              </div>
+              <div class="result-info" id="pb-result-info" style="display:none"></div>
+              <div id="pb-pagination" class="pg-bar" style="display:none"></div>
+              <div id="pb-bills-wrapper"></div>
+              <div class="empty" id="pb-empty" style="display:none">No purchase bills in this range.</div>
+            </div>
+          </div>
+
+          <!-- Purchase Return Bills -->
+          <div id="purchase-return-bills-panel" class="sub-panel" style="display:none;">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-file-invoice"></i> Purchase return bills</div>
+              <div class="return-search-row">
+                <div class="field" style="flex:1;margin-bottom:0"><label>Date from</label><input id="prb-date-from" type="date"/></div>
+                <div class="field" style="flex:1;margin-bottom:0"><label>Date to</label><input id="prb-date-to" type="date"/></div>
+                <button class="return-search-btn" style="height:38px" onclick="applyPurchaseReturnBillsFilter()"><i class="ti ti-filter"></i> Apply</button>
+                <button class="return-search-btn" style="height:38px" onclick="resetPurchaseReturnBillsFilter()"><i class="ti ti-refresh"></i> Reset</button>
+              </div>
+              <div class="result-info" id="prb-result-info" style="display:none"></div>
+              <div id="prb-pagination" class="pg-bar" style="display:none"></div>
+              <div class="table-wrap">
+                <table><thead><tr><th>#</th><th>Return Bill No.</th><th>Party</th><th>Item</th><th>Size</th><th>Qty</th><th>Return Amt</th><th>Reason</th><th>Date</th></tr></thead><tbody id="prb-tbody"></tbody></table>
+                <div class="empty" id="prb-empty" style="display:none">No purchase return bills in this range.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Purchase Borrow Panel -->
+          <div id="purchase-borrow-panel" class="sub-panel" style="display:none;">
+            <div class="borrow-container">
+
+                <!-- Summary Cards -->
+                <div class="borrow-summary">
+                    <div class="summary-card">
+                        <div class="summary-icon"><i class="ti ti-wallet"></i></div>
+                        <div class="summary-content">
+                            <div class="summary-value" id="pborrow-total">₹0.00</div>
+                            <div class="summary-label">Total Borrow</div>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-icon"><i class="ti ti-file-invoice"></i></div>
+                        <div class="summary-content">
+                            <div class="summary-value" id="pborrow-pending-count">0</div>
+                            <div class="summary-label">Pending Bills</div>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-icon"><i class="ti ti-credit-card"></i></div>
+                        <div class="summary-content">
+                            <div class="summary-value" id="pborrow-paid-today">₹0.00</div>
+                            <div class="summary-label">Paid Today</div>
+                        </div>
+                    </div>
+                    <div class="summary-card overdue">
+                        <div class="summary-icon"><i class="ti ti-alert-triangle"></i></div>
+                        <div class="summary-content">
+                            <div class="summary-value" id="pborrow-overdue-count">0</div>
+                            <div class="summary-label">Overdue Bills</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="borrow-filters">
+                    <div class="filter-group">
+                        <input type="text" id="pborrow-search" placeholder="Search party or bill no..." oninput="applyBorrowFilters('purchase')">
+                        <div class="filter-date-buttons">
+                            <button onclick="setBorrowDateFilter('purchase','today')">Today</button>
+                            <button onclick="setBorrowDateFilter('purchase','yesterday')">Yesterday</button>
+                            <button onclick="setBorrowDateFilter('purchase','week')">This Week</button>
+                            <button onclick="setBorrowDateFilter('purchase','month')">This Month</button>
+                            <button onclick="setBorrowDateFilter('purchase','lastmonth')">Last Month</button>
+                            <input type="date" id="pborrow-date-from" onchange="applyBorrowFilters('purchase')">
+                            <span>to</span>
+                            <input type="date" id="pborrow-date-to" onchange="applyBorrowFilters('purchase')">
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <select id="pborrow-status" onchange="applyBorrowFilters('purchase')">
+                            <option value="">All Status</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Partial">Partial</option>
+                            <option value="Paid">Paid</option>
+                            <option value="Overdue">Overdue</option>
+                        </select>
+                        <select id="pborrow-sort" onchange="applyBorrowFilters('purchase')">
+                            <option value="date_desc">Latest First</option>
+                            <option value="date_asc">Oldest First</option>
+                            <option value="amount_desc">Highest Amount</option>
+                            <option value="amount_asc">Lowest Amount</option>
+                        </select>
+                        <button class="filter-apply" onclick="applyBorrowFilters('purchase')"><i class="ti ti-search"></i> Apply</button>
+                        <button class="filter-reset" onclick="resetBorrowFilters('purchase')"><i class="ti ti-refresh"></i> Reset</button>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div id="pborrow-pagination" class="pg-bar" style="display:none"></div>
+                
+                <!-- Table -->
+                <div class="borrow-table-wrapper">
+                    <table class="borrow-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Bill No.</th>
+                                <th>Party</th>
+                                <th>Phone</th>
+                                <th>Total</th>
+                                <th>Paid</th>
+                                <th>Balance</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pborrow-tbody">
+                            <!-- Rows rendered by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty state -->
+                <div class="borrow-empty" id="pborrow-empty" style="display:none;">
+                    <i class="ti ti-inbox"></i>
+                    <p>No pending borrow records found.</p>
+                </div>
+
+            </div>
+        </div>
+
+        </div>

@@ -1,0 +1,165 @@
+<div id="dashboard-panel" class="main-panel">
+
+          <!-- Loading Skeleton -->
+          <div id="dashboard-skeleton" style="display:block; animation: pulse 1.5s infinite;">
+            <div style="height:60px; background:var(--color-background-tertiary); border-radius:8px; margin-bottom:1.5rem;"></div>
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:12px; margin-bottom:1.5rem;">
+              <div style="height:80px; background:var(--color-background-tertiary); border-radius:8px;"></div>
+              <div style="height:80px; background:var(--color-background-tertiary); border-radius:8px;"></div>
+              <div style="height:80px; background:var(--color-background-tertiary); border-radius:8px;"></div>
+              <div style="height:80px; background:var(--color-background-tertiary); border-radius:8px;"></div>
+              <div style="height:80px; background:var(--color-background-tertiary); border-radius:8px;"></div>
+              <div style="height:80px; background:var(--color-background-tertiary); border-radius:8px;"></div>
+              <div style="height:80px; background:var(--color-background-tertiary); border-radius:8px;"></div>
+              <div style="height:80px; background:var(--color-background-tertiary); border-radius:8px;"></div>
+              <div style="height:80px; background:var(--color-background-tertiary); border-radius:8px;"></div>
+              <div style="height:80px; background:var(--color-background-tertiary); border-radius:8px;"></div>
+            </div>
+            <div style="display:grid; grid-template-columns:2fr 1fr; gap:1.5rem;">
+              <div style="height:300px; background:var(--color-background-tertiary); border-radius:8px;"></div>
+              <div style="height:300px; background:var(--color-background-tertiary); border-radius:8px;"></div>
+            </div>
+          </div>
+
+          <!-- Actual Dashboard Content -->
+          <div id="dashboard-content" style="display:none;">
+            <!-- Quick Actions Row -->
+            <div class="quick-actions" style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:1.5rem; align-items:center;">
+              <button class="add-btn" onclick="goToSub('purchase')"><i class="ti ti-shopping-cart"></i> New Purchase</button>
+              <button class="add-btn" onclick="goToSub('sell')"><i class="ti ti-cash-banknote"></i> New Sale</button>
+              <button class="add-btn" onclick="goToSub('items-create')"><i class="ti ti-package"></i> New Item</button>
+              <button class="add-btn" onclick="goToSub('parties')"><i class="ti ti-users"></i> New Party</button>
+              <button class="add-btn" onclick="goToSub('voucher-payment')"><i class="ti ti-arrow-up-circle"></i> Payment</button>
+              <button class="add-btn" onclick="goToSub('voucher-receipt')"><i class="ti ti-arrow-down-circle"></i> Receipt</button>
+              <button class="add-btn" onclick="goToSub('tally-ledgers')"><i class="ti ti-book"></i> New Ledger</button>
+              <button class="add-btn" onclick="goToSub('analyze')"><i class="ti ti-chart-bar"></i> Reports</button>
+
+              <div style="margin-left:auto; display:flex; gap:10px; align-items:center;">
+                <button class="filter-toggle" onclick="loadDashboard()"><i class="ti ti-refresh"></i> Refresh</button>
+                <select id="dashboard-period" onchange="loadDashboard()" style="height:38px; padding:0 12px; border-radius:var(--border-radius-md); border:1px solid var(--color-border-secondary); background:var(--color-background-primary); color:var(--color-text-primary);">
+                  <option value="today">Today</option>
+                  <option value="week">This Week</option>
+                  <option value="month">This Month</option>
+                  <option value="custom">Custom</option>
+                </select>
+                <div id="custom-date-range" style="display:none; gap:5px;">
+                  <input type="date" id="from-date" style="height:38px; padding:0 10px; border-radius:var(--border-radius-md); border:1px solid var(--color-border-secondary); background:var(--color-background-primary); color:var(--color-text-primary);"/>
+                  <input type="date" id="to-date" style="height:38px; padding:0 10px; border-radius:var(--border-radius-md); border:1px solid var(--color-border-secondary); background:var(--color-background-primary); color:var(--color-text-primary);"/>
+                  <button class="filter-apply" onclick="loadDashboard()">Apply</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="stats" id="kpi-cards" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin-bottom:1.5rem;">
+              <div class="stat stat-flow"><div class="stat-label"><span class="stat-icon-badge"><i class="ti ti-currency-rupee"></i></span> <span id="kpi-period-label-1">Today's</span> Sales</div><div class="stat-val" id="kpi-today-sales">₹0.00</div></div>
+              <div class="stat stat-flow"><div class="stat-label"><span class="stat-icon-badge"><i class="ti ti-shopping-cart"></i></span> <span id="kpi-period-label-2">Today's</span> Purchases</div><div class="stat-val" id="kpi-today-purchases">₹0.00</div></div>
+              <div class="stat stat-flow"><div class="stat-label"><span class="stat-icon-badge"><i class="ti ti-trending-up"></i></span> <span id="kpi-period-label-3">Today's</span> Profit</div><div class="stat-val profit" id="kpi-today-profit">₹0.00</div></div>
+              <div class="stat stat-flow"><div class="stat-label"><span class="stat-icon-badge"><i class="ti ti-wallet"></i></span> <span id="kpi-period-label-4">Today's</span> Cash Sales</div><div class="stat-val" id="kpi-cash">₹0.00</div></div>
+              <div class="stat stat-flow"><div class="stat-label"><span class="stat-icon-badge"><i class="ti ti-receipt"></i></span> <span id="kpi-period-label-5">Today's</span> Credit Sales</div><div class="stat-val" id="kpi-receivable">₹0.00</div></div>
+              <div class="stat stat-flow"><div class="stat-label"><span class="stat-icon-badge"><i class="ti ti-credit-card"></i></span> <span id="kpi-period-label-6">Today's</span> Credit Purchases</div><div class="stat-val" id="kpi-payable">₹0.00</div></div>
+              <div class="stat stat-balance"><div class="stat-label"><span class="stat-icon-badge"><i class="ti ti-receipt-2"></i></span> Total Receivable <span class="stat-badge-text">All Time</span></div><div class="stat-val" id="kpi-total-receivable">₹0.00</div></div>
+              <div class="stat stat-balance"><div class="stat-label"><span class="stat-icon-badge"><i class="ti ti-file-invoice"></i></span> Total Payable <span class="stat-badge-text">All Time</span></div><div class="stat-val" id="kpi-total-payable">₹0.00</div></div>
+              <div class="stat stat-stock"><div class="stat-label"><span class="stat-icon-badge"><i class="ti ti-packages"></i></span> Stock Qty</div><div class="stat-val" id="kpi-stock-qty">0</div></div>
+              <div class="stat stat-stock"><div class="stat-label"><span class="stat-icon-badge"><i class="ti ti-coin"></i></span> Stock Value</div><div class="stat-val" id="kpi-stock-value">₹0.00</div></div>
+            </div>
+
+            <!-- Charts Row -->
+            <div style="display:grid; grid-template-columns:2fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+              <div class="form-card">
+                <div class="form-title"><i class="ti ti-chart-line"></i> Sales vs Purchases (Last 7 Days)</div>
+                <div style="height:220px; position:relative;">
+                  <canvas id="salesVsPurchaseChart"></canvas>
+                </div>
+              </div>
+              <div class="form-card">
+                <div class="form-title"><i class="ti ti-chart-bar"></i> Monthly Profit</div>
+                <div style="height:220px; position:relative;">
+                  <canvas id="monthlyProfitChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Payment Mode & Other Stats Row -->
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+              <div class="form-card">
+                <div class="form-title"><i class="ti ti-pie-chart"></i> Payment Mode</div>
+                <div style="height:180px; position:relative;">
+                  <canvas id="paymentModeChart"></canvas>
+                </div>
+              </div>
+              <div class="form-card">
+                <div class="form-title"><i class="ti ti-trophy"></i> Top Selling Products</div>
+                <div id="top-products-list" style="font-size:0.9rem;">Loading...</div>
+              </div>
+              <div class="form-card">
+                <div class="form-title"><i class="ti ti-packages"></i> Stock Summary</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:13px;">
+                  <div><span style="color:var(--color-text-tertiary)">Total Products:</span> <span id="stock-total-products">0</span></div>
+                  <div><span style="color:var(--color-text-tertiary)">Total Quantity:</span> <span id="stock-total-qty">0</span></div>
+                  <div><span style="color:var(--color-text-tertiary)">Stock Value:</span> <span id="stock-total-value">₹0.00</span></div>
+                  <div><span style="color:var(--color-text-tertiary)">Low Stock Items:</span> <span id="stock-low-items">0</span></div>
+                  <div><span style="color:var(--color-text-tertiary)">Out of Stock:</span> <span id="stock-out-items">0</span></div>
+                  <div><span style="color:var(--color-text-tertiary)">Top Selling:</span> <span id="stock-top-selling">N/A</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Financial & Profit Summary -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+              <div class="form-card">
+                <div class="form-title"><i class="ti ti-wallet"></i> Financial Summary</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:13px;">
+                  <div><span style="color:var(--color-text-tertiary)">Cash:</span> <span id="fin-cash">₹0.00</span></div>
+                  <div><span style="color:var(--color-text-tertiary)">Bank:</span> <span id="fin-bank">₹0.00</span></div>
+                  <div><span style="color:var(--color-text-tertiary)">Receivable:</span> <span id="fin-receivable">₹0.00</span></div>
+                  <div><span style="color:var(--color-text-tertiary)">Payable:</span> <span id="fin-payable">₹0.00</span></div>
+                  <div><span style="color:var(--color-text-tertiary)">GST Payable:</span> <span id="fin-gst">₹0.00</span></div>
+                </div>
+              </div>
+              <div class="form-card">
+                <div class="form-title"><i class="ti ti-trending-up"></i> Profit Summary</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:13px;">
+                  <div><span style="color:var(--color-text-tertiary)">Total Income:</span> <span id="profit-income">₹0.00</span></div>
+                  <div><span style="color:var(--color-text-tertiary)">Total Expenses:</span> <span id="profit-expenses">₹0.00</span></div>
+                  <div><span style="color:var(--color-text-tertiary)">Gross Profit:</span> <span id="profit-gross">₹0.00</span></div>
+                  <div><span style="color:var(--color-text-tertiary)">Net Profit:</span> <span id="profit-net">₹0.00</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Activities, Purchases, Sales -->
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+              <div class="form-card">
+                <div class="form-title"><i class="ti ti-clock"></i> Recent Activities</div>
+                <div id="dash-recent-activities" style="font-size:0.9rem; max-height:250px; overflow-y:auto;">Loading...</div>
+              </div>
+              <div class="form-card">
+                <div class="form-title"><i class="ti ti-shopping-cart"></i> Recent Purchases</div>
+                <div id="dash-recent-purchases" style="font-size:0.9rem; max-height:250px; overflow-y:auto;">Loading...</div>
+              </div>
+              <div class="form-card">
+                <div class="form-title"><i class="ti ti-cash-banknote"></i> Recent Sales</div>
+                <div id="dash-recent-sales" style="font-size:0.9rem; max-height:250px; overflow-y:auto;">Loading...</div>
+              </div>
+            </div>
+
+            <!-- Low Stock Alert & Business Summary -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+              <div class="form-card" style="border-left:4px solid #ef4444;">
+                <div class="form-title"><i class="ti ti-alert-triangle" style="color:#ef4444;"></i> Low Stock Alert</div>
+                <div id="dash-low-stock-alert" style="font-size:0.9rem;">Loading...</div>
+              </div>
+              <div class="form-card">
+                <div class="form-title"><i class="ti ti-clipboard"></i> Business Summary (Today)</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:13px;">
+                  <div><span style="color:var(--color-text-tertiary)">Purchase Bills:</span> <span id="biz-purchase-count">0</span></div>
+                  <div><span style="color:var(--color-text-tertiary)">Sales Bills:</span> <span id="biz-sales-count">0</span></div>
+                  <div><span style="color:var(--color-text-tertiary)">Purchase Amount:</span> <span id="biz-purchase-amount">₹0.00</span></div>
+                  <div><span style="color:var(--color-text-tertiary)">Sales Amount:</span> <span id="biz-sales-amount">₹0.00</span></div>
+                  <div style="grid-column:span 2;"><span style="color:var(--color-text-tertiary)">Today's Profit:</span> <span id="biz-profit">₹0.00</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>

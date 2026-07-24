@@ -1,0 +1,9 @@
+<div id="departments-main-panel" class="main-panel" style="display:none;">
+          <div id="departments-panel" class="sub-panel active">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-building-store"></i> Manage Departments</div>
+              <div style="display:flex;gap:8px;margin-bottom:1rem"><input id="dept-new-input" type="text" placeholder="New department name..." style="flex:1;padding:0 10px;height:36px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-size:13px;font-family:var(--font-sans);" onkeydown="if(event.key==='Enter')addDepartment()"/><button class="filter-apply" onclick="addDepartment()" style="display:inline-flex;align-items:center;gap:5px;height:36px"><i class="ti ti-plus"></i> Add</button></div>
+              <div id="dept-list" class="dept-list"><span style="color:var(--color-text-tertiary);font-size:13px">No departments added yet.</span></div>
+            </div>
+          </div>
+        </div>

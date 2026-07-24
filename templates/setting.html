@@ -1,0 +1,81 @@
+<div id="settings-main-panel" class="main-panel" style="display:none;">
+
+          <!-- Backup -->
+          <div id="settings-backup-panel" class="sub-panel active">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-database-export"></i> Data Backup</div>
+              <div style="margin-bottom:1rem"><p style="color:var(--color-text-secondary);font-size:13px;margin-bottom:12px">Create a complete backup of your database. Backups are stored in the 'backups' folder with timestamps.</p><button class="add-btn" onclick="createBackup()"><i class="ti ti-database"></i> Create Backup Now</button></div>
+              <div id="backup-list"><div style="font-size:13px;color:var(--color-text-tertiary)">Loading backups...</div></div>
+            </div>
+          </div>
+
+          <!-- Export -->
+          <div id="settings-export-panel" class="sub-panel" style="display:none;">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-file-export"></i> Data Export</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1rem">
+                <div>
+                  <h4 style="font-size:14px;color:var(--color-text-primary);margin-bottom:8px">Export Data</h4>
+                  <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:12px">Export all data as Excel or CSV files.</p>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap"><a href="/api/export/excel" class="add-btn" download><i class="ti ti-file-spreadsheet"></i> Export Excel</a><a href="/api/export/csv" class="add-btn" download><i class="ti ti-file-text"></i> Export CSV</a></div>
+                </div>
+                <div><h4 style="font-size:14px;color:var(--color-text-primary);margin-bottom:8px">Export Tables</h4><div id="export-tables-list" style="font-size:13px;color:var(--color-text-secondary)"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Import -->
+          <div id="settings-import-panel" class="sub-panel" style="display:none;">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-file-import"></i> Data Import</div>
+              <div style="margin-bottom:1rem"><p style="color:var(--color-text-secondary);font-size:13px;margin-bottom:12px">Import data from backup file. This will overwrite existing data. Use with caution.</p><input type="file" id="import-file" accept=".db,.sqlite" style="margin-bottom:12px;display:block"/><button class="add-btn" onclick="importBackup()"><i class="ti ti-upload"></i> Import Backup</button></div>
+            </div>
+          </div>
+
+          <!-- Users -->
+          <div id="settings-users-panel" class="sub-panel" style="display:none;">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-users-group"></i> Manage Users</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1rem">
+                <div>
+                  <h4 style="font-size:14px;color:var(--color-text-primary);margin-bottom:8px">Add User</h4>
+                  <div class="fields" style="grid-template-columns:1fr 1fr;"><div class="field"><label>Username *</label><input id="user-new-username" type="text" placeholder="e.g. admin"/></div><div class="field"><label>Password *</label><input id="user-new-password" type="password" placeholder="••••••••"/></div></div>
+                  <button class="add-btn" onclick="addUser()"><i class="ti ti-plus"></i> Add User</button>
+                </div>
+                <div><h4 style="font-size:14px;color:var(--color-text-primary);margin-bottom:8px">User List</h4><div id="user-list" style="font-size:13px;color:var(--color-text-secondary)">Loading users...</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Accounts -->
+          <div id="settings-accounts-panel" class="sub-panel" style="display:none;">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-wallet"></i> Manage Accounts</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1rem">
+                <div>
+                  <h4 style="font-size:14px;color:var(--color-text-primary);margin-bottom:8px">Add Account</h4>
+                  <div class="fields" style="grid-template-columns:1fr 1fr;"><div class="field"><label>Account Name *</label><input id="acc-new-name" type="text" placeholder="e.g. HDFC Current"/></div><div class="field"><label>Type</label><select id="acc-new-type"><option value="cash">Cash</option><option value="bank">Bank</option></select></div><div class="field"><label>Opening Balance (₹)</label><input id="acc-new-balance" type="number" placeholder="0" min="0" step="0.01" value="0"/></div><div class="field"><label>Account No.</label><input id="acc-new-number" type="text" placeholder="e.g. 1234567890"/></div></div>
+                  <button class="add-btn" onclick="addAccount()"><i class="ti ti-plus"></i> Add Account</button>
+                </div>
+                <div><h4 style="font-size:14px;color:var(--color-text-primary);margin-bottom:8px">Account List</h4><div id="account-list" style="font-size:13px;color:var(--color-text-secondary)">Loading accounts...</div></div>
+              </div>
+            </div>
+          </div>
+
+        <!-- Shop Info -->
+          <div id="settings-shop-info-panel" class="sub-panel" style="display:none;">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-building-store"></i> Shop Info (for Sale Receipts)</div>
+              <p style="color:var(--color-text-secondary);font-size:13px;margin-bottom:12px">Ye details Sale Receipt ke top par print hongi.</p>
+              <div class="fields" style="grid-template-columns:1fr 1fr;">
+                <div class="field"><label>Shop Name</label><input id="shop-name" type="text" placeholder="e.g. Sharma Garments"/></div>
+                <div class="field"><label>Phone</label><input id="shop-phone" type="text" placeholder="e.g. 9876543210"/></div>
+                <div class="field" style="grid-column:span 2"><label>Address</label><input id="shop-address" type="text" placeholder="e.g. Shop No.5, Main Market, Pune"/></div>
+                <div class="field"><label>GST No.</label><input id="shop-gst" type="text" placeholder="e.g. 27ABCDE1234F1Z5"/></div>
+                <div class="field"><label>Receipt Footer Note</label><input id="shop-footer" type="text" placeholder="e.g. Thank you! Visit again"/></div>
+              </div>
+              <button class="add-btn" onclick="saveShopInfo()"><i class="ti ti-check"></i> Save Shop Info</button>
+            </div>
+          </div>
+
+        </div>

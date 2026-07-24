@@ -1,0 +1,398 @@
+<div id="sales-main-panel" class="main-panel" style="display:none;">
+
+          <!-- Sale Entry -->
+          <div id="sell-panel" class="sub-panel active">
+            <div class="form-card" id="scan-card">
+              <div class="form-title"><i class="ti ti-user" aria-hidden="true"></i> Customer &amp; Bill Info</div>
+
+              <!-- Sale Mode Sub-tabs -->
+              <div class="sub-tabs" style="margin-bottom:1rem;">
+                <button class="sub-tab active" id="sale-mode-cash" onclick="setSaleMode('cash')"><i class="ti ti-coin"></i> Cash Sale</button>
+                <button class="sub-tab" id="sale-mode-credit" onclick="setSaleMode('credit')"><i class="ti ti-credit-card"></i> Credit Sale</button>
+              </div>
+
+              <div class="fields" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+                <div class="field"><label>Customer Name <span style="color:var(--color-text-tertiary)">(optional)</span></label><input id="f-customer-name" type="text" placeholder="e.g. Suresh Kumar" autocomplete="off"/></div>
+                <div class="field"><label>Date</label><input id="f-sale-date" type="date"/></div>
+                <div class="field"><label>Customer No. <span style="color:var(--color-text-tertiary)">(optional)</span></label><input id="f-customer-no" type="text" placeholder="e.g. 9876543210" autocomplete="off"/></div>
+                <div class="field">
+                  <label>Payment Mode</label>
+                  <select id="f-payment-mode" onchange="toggleSplitPayment()">
+                    <option value="Cash">Cash</option>
+                    <option value="Online">Online</option>
+                    <option value="Split">Split (Cash + Online)</option>
+                  </select>
+                </div>
+                <div class="field"><label>Bill No. <span style="color:var(--color-text-tertiary)">(optional)</span></label>
+                  <input id="f-bill-no" type="text" placeholder="Auto-generated" autocomplete="off"
+                         onfocus="if(!this.value.trim()) autoFillBillNo()" />
+                </div>
+              </div>
+              <!-- Split payment fields -->
+              <div id="split-payment-fields" style="display:none;">
+                <div class="field">
+                  <label>Cash Amount</label>
+                  <input type="number" id="f-cash-amount" min="0" step="1" placeholder="Cash amount"
+                         oninput="renderScannedItems()" />
+                </div>
+                <div class="field">
+                  <label>Online Amount</label>
+                  <input type="number" id="f-online-amount" min="0" step="1" placeholder="Online amount"
+                         oninput="renderScannedItems()" />
+                </div>
+                <div id="split-balance-indicator" style="font-size:12px; margin-top:4px;"></div>
+              </div>
+              <!-- Credit sale: optional advance/partial payment received now -->
+              <div id="credit-advance-fields" style="display:none;">
+                <div class="field">
+                  <label>Amount Received Now <span style="color:var(--color-text-tertiary)">(optional)</span></label>
+                  <input type="number" id="f-credit-advance-amount" min="0" step="1" placeholder="e.g. 500"/>
+                </div>
+                <div style="font-size:12px; color:var(--color-text-tertiary); margin-top:2px;">
+                  Leave blank for no payment yet. If this equals the full bill amount, the sale will be saved as a Cash Sale instead of Credit.
+                </div>
+              </div>
+            </div>
+            <div class="form-card">
+              <div class="sub-tabs" style="margin-bottom:1rem;">
+                <button class="sub-tab active" id="sell-panel-mode-sell" onclick="switchSellPanelMode('sell')"><i class="ti ti-cash"></i> Sell</button>
+                <button class="sub-tab" id="sell-panel-mode-replace" onclick="switchSellPanelMode('replace')"><i class="ti ti-replace"></i> Replace / Exchange</button>
+              </div>
+              <div id="sell-barcode-panel">
+                <div class="sell-input-tabs">
+                  <button class="sell-input-tab active" id="sitab-enter" onclick="switchBarcodeInputTab('enter')"><i class="ti ti-keyboard"></i> Enter Barcode No.</button>
+                  <button class="sell-input-tab" id="sitab-scan" onclick="switchBarcodeInputTab('scan')"><i class="ti ti-scan"></i> Scan</button>
+                </div>
+                <div id="bc-enter-panel">
+                  <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:10px">
+                    <div class="field" style="flex:1;margin-bottom:0"><label>Barcode Number or Product Name</label><input id="f-bc-enter" type="text" placeholder="Scan barcode or type product name..." autocomplete="off" oninput="onProductSearchInput('enter', this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();lookupAndAddBarcode('f-bc-enter')}"/></div>
+                    <button class="filter-apply" style="height:38px;padding:0 16px;white-space:nowrap" onclick="lookupAndAddBarcode('f-bc-enter')"><i class="ti ti-plus"></i> Add</button>
+                  </div>
+                  <div id="bc-enter-suggestions" class="product-suggest-list" style="display:none"></div>
+                  <div id="bc-enter-status" style="font-size:13px;min-height:18px"></div>
+                </div>
+                <div id="bc-scan-panel" style="display:none">
+                  <div class="scan-gun-zone" id="scan-gun-zone" onclick="focusScanInput()">
+                    <div class="scan-gun-icon"><i class="ti ti-scan"></i></div>
+                    <div class="scan-gun-label" id="scan-gun-label">Scanner ready — scan a barcode</div>
+                    <div class="scan-gun-hint">Click here to re-focus scanner</div>
+                    <input id="f-bc-scan" type="text" autocomplete="off" style="position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:2px;height:2px;border:none;background:transparent;color:transparent;caret-color:transparent;outline:none" oninput="onScanInput(this)"/>
+                  </div>
+                  <div id="bc-scan-status" style="font-size:13px;min-height:18px;margin-top:8px"></div>
+                </div>
+                <div id="scanned-items-section" style="display:none;margin-top:14px">
+                  <div class="purchase-items-label" style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+                    <span><i class="ti ti-list-check"></i> Items to sell <span id="scanned-count-badge" class="margin-badge" style="margin-left:6px"></span></span>
+                    <label class="pp-toggle" title="Purchase price dikhaye ya nahi">
+                      <input type="checkbox" id="toggle-purchase-price" onchange="togglePurchasePriceVisibility()"/>
+                      <span class="pp-toggle-track"><span class="pp-toggle-thumb"></span></span>
+                      <span class="pp-toggle-label">Purchase Price</span>
+                    </label>
+                  </div>
+                  <div id="scanned-items-list"></div>
+                  <div class="scanned-total-row" id="scanned-total-row"></div>
+                </div>
+                <div id="discount-section" style="margin-top:14px;border-radius:var(--border-radius-md);border:1px solid var(--color-border-secondary);overflow:hidden">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--color-background-tertiary);border-bottom:1px solid var(--color-border-secondary)">
+                    <span style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--color-text-tertiary)"><i class="ti ti-tag-off" style="margin-right:5px"></i>Discount</span>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <button type="button" onclick="setDiscount(5)"  class="disc-preset">5%</button>
+                      <button type="button" onclick="setDiscount(10)" class="disc-preset">10%</button>
+                      <button type="button" onclick="setDiscount(15)" class="disc-preset">15%</button>
+                      <button type="button" onclick="setDiscount(20)" class="disc-preset">20%</button>
+                      <button type="button" onclick="setDiscount(0)"  class="disc-preset disc-preset-clear"><i class="ti ti-x" style="font-size:11px"></i></button>
+                    </div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--color-background-secondary);flex-wrap:wrap">
+                    <div style="position:relative;display:flex;align-items:center">
+                      <input id="f-discount" type="number" placeholder="0" min="0" max="100" step="0.1" autocomplete="off" oninput="onDiscountInput()"
+                        style="width:100px;padding:8px 32px 8px 12px;border-radius:8px;border:1px solid var(--color-border-secondary);background:var(--color-background-tertiary);color:var(--color-text-primary);font-size:15px;font-weight:600;outline:none"/>
+                      <span style="position:absolute;right:10px;font-size:13px;color:var(--color-text-tertiary);pointer-events:none">%</span>
+                    </div>
+                    <div style="width:1px;align-self:stretch;background:var(--color-border-secondary)"></div>
+                    <div style="display:flex;flex-direction:column;gap:3px">
+                      <label style="font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--color-text-tertiary)">Sale Amount</label>
+                      <div style="position:relative;display:flex;align-items:center">
+                        <span style="position:absolute;left:10px;font-size:13px;color:var(--color-text-tertiary);pointer-events:none">₹</span>
+                        <input id="f-sale-amount" type="number" placeholder="0" min="0" step="0.01" autocomplete="off" oninput="onSaleAmountInput()"
+                          style="width:130px;padding:8px 12px 8px 24px;border-radius:8px;border:1px solid var(--color-border-secondary);background:var(--color-background-tertiary);color:var(--color-text-primary);font-size:15px;font-weight:600;outline:none"/>
+                      </div>
+                    </div>
+                    <div style="width:1px;align-self:stretch;background:var(--color-border-secondary)"></div>
+                    <div style="display:flex;flex-direction:column;gap:3px">
+                      <label style="font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--color-text-tertiary)">Discount Amount</label>
+                      <div style="position:relative;display:flex;align-items:center">
+                        <span style="position:absolute;left:10px;font-size:13px;color:var(--color-text-tertiary);pointer-events:none">₹</span>
+                        <input id="f-discount-amount" type="number" placeholder="0" min="0" step="0.01" autocomplete="off" oninput="onDiscountAmountInput()"
+                          style="width:130px;padding:8px 12px 8px 24px;border-radius:8px;border:1px solid var(--color-border-secondary);background:var(--color-background-tertiary);color:var(--color-text-primary);font-size:15px;font-weight:600;outline:none"/>
+                      </div>
+                    </div>
+                    <div id="discount-preview" style="flex:1;font-size:13px;color:var(--color-text-secondary)"></div>
+                  </div>
+                </div>
+                <div class="btn-row" style="margin-top:14px">
+                  <button class="add-btn" onclick="saveScannedSell()"><i class="ti ti-check"></i> Save Sell</button>
+                  <button class="filter-toggle" onclick="clearScannedItems()" style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;font-size:13px"><i class="ti ti-x"></i> Clear All</button>
+                  <button class="filter-toggle" onclick="switchType('analyze');switchAnalyzeTab('sells')" style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;font-size:13px"><i class="ti ti-chart-bar"></i> Reports</button>
+                </div>
+              </div>
+
+              <!-- Replace / Exchange mode -->
+              <div id="replace-panel" style="display:none">
+                <div class="purchase-items-label" style="margin-bottom:8px"><i class="ti ti-arrow-back-up"></i> Return Item <span style="font-weight:400;color:var(--color-text-tertiary)">(scan the sold item the customer is returning)</span></div>
+                <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:8px">
+                  <div class="field" style="flex:1;margin-bottom:0"><label>Barcode Number or Product Name</label><input id="f-bc-old" type="text" placeholder="Scan barcode or type product name of returned item..." autocomplete="off" oninput="onProductSearchInput('old', this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();lookupAndAddReplaceBarcode('old','f-bc-old')}"/></div>
+                  <button class="filter-apply" style="height:38px;padding:0 16px;white-space:nowrap" onclick="lookupAndAddReplaceBarcode('old','f-bc-old')"><i class="ti ti-plus"></i> Add</button>
+                </div>
+                <div id="bc-old-suggestions" class="product-suggest-list" style="display:none"></div>
+                <div id="bc-old-status" style="font-size:13px;min-height:18px"></div>
+                <div id="replace-old-section" style="display:none;margin-top:8px;margin-bottom:16px">
+                  <div id="replace-old-list"></div>
+                  <div class="scanned-total-row" id="replace-old-total-row"></div>
+                </div>
+
+                <div class="purchase-items-label" style="margin:14px 0 8px"><i class="ti ti-shopping-bag"></i> Give Item <span style="font-weight:400;color:var(--color-text-tertiary)">(scan the new item being handed over)</span></div>
+                <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:8px">
+                  <div class="field" style="flex:1;margin-bottom:0"><label>Barcode Number or Product Name</label><input id="f-bc-new" type="text" placeholder="Scan barcode or type product name of new item..." autocomplete="off" oninput="onProductSearchInput('new', this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();lookupAndAddReplaceBarcode('new','f-bc-new')}"/></div>
+                  <button class="filter-apply" style="height:38px;padding:0 16px;white-space:nowrap" onclick="lookupAndAddReplaceBarcode('new','f-bc-new')"><i class="ti ti-plus"></i> Add</button>
+                </div>
+                <div id="bc-new-suggestions" class="product-suggest-list" style="display:none"></div>
+                <div id="bc-new-status" style="font-size:13px;min-height:18px"></div>
+                <div id="replace-new-section" style="display:none;margin-top:8px;margin-bottom:16px">
+                  <div id="replace-new-list"></div>
+                  <div class="scanned-total-row" id="replace-new-total-row"></div>
+                </div>
+
+                <div id="replace-discount-section" style="margin:14px 0;border-radius:var(--border-radius-md);border:1px solid var(--color-border-secondary);overflow:hidden">
+                  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--color-background-tertiary);border-bottom:1px solid var(--color-border-secondary)">
+                    <span style="font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--color-text-tertiary)"><i class="ti ti-tag-off" style="margin-right:5px"></i>Discount on New Item(s)</span>
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <button type="button" onclick="setReplaceDiscount(5)"  class="disc-preset">5%</button>
+                      <button type="button" onclick="setReplaceDiscount(10)" class="disc-preset">10%</button>
+                      <button type="button" onclick="setReplaceDiscount(15)" class="disc-preset">15%</button>
+                      <button type="button" onclick="setReplaceDiscount(20)" class="disc-preset">20%</button>
+                      <button type="button" onclick="setReplaceDiscount(0)"  class="disc-preset disc-preset-clear"><i class="ti ti-x" style="font-size:11px"></i></button>
+                    </div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--color-background-secondary)">
+                    <div style="position:relative;display:flex;align-items:center">
+                      <input id="f-replace-discount" type="number" placeholder="0" min="0" max="100" step="0.1" autocomplete="off" oninput="onReplaceDiscountInput()"
+                        style="width:100px;padding:8px 32px 8px 12px;border-radius:8px;border:1px solid var(--color-border-secondary);background:var(--color-background-tertiary);color:var(--color-text-primary);font-size:15px;font-weight:600;outline:none"/>
+                      <span style="position:absolute;right:10px;font-size:13px;color:var(--color-text-tertiary);pointer-events:none">%</span>
+                    </div>
+                    <div id="replace-discount-preview" style="flex:1;font-size:13px;color:var(--color-text-secondary)"></div>
+                  </div>
+                </div>
+
+                <div class="field"><label>Note <span style="color:var(--color-text-tertiary)">(optional)</span></label><input id="f-replace-note" type="text" placeholder="e.g. Size exchange" autocomplete="off"/></div>
+
+                <div id="replace-summary-row" class="scanned-total-row" style="margin-top:12px"></div>
+                <div id="replace-total-price-row" class="scanned-total-row" style="margin-top:6px;font-size:15px"></div>
+
+                <div class="btn-row" style="margin-top:14px">
+                  <button class="add-btn" onclick="saveReplaceSale()"><i class="ti ti-check"></i> Save Replace</button>
+                  <button class="filter-toggle" onclick="clearReplaceItems()" style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;font-size:13px"><i class="ti ti-x"></i> Clear All</button>
+                </div>
+
+                <div style="margin-top:20px">
+                  <div class="form-title"><i class="ti ti-history"></i> Recent Replace Bills</div>
+                  <table>
+                    <thead><tr><th>#</th><th>Bill No.</th><th>Date</th><th>Customer</th><th>Return Total</th><th>Give Total</th><th>Difference</th><th>Note</th></tr></thead>
+                    <tbody id="replace-bills-tbody"></tbody>
+                  </table>
+                  <div id="replace-bills-empty" style="display:none;padding:12px;text-align:center;color:var(--color-text-tertiary)">No replace bills yet.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Last sale receipt — shown here after a successful save -->
+            <div id="last-sale-receipt-wrap" class="form-card" style="display:none;margin-top:14px">
+              <div class="form-title"><i class="ti ti-receipt"></i> Last Sale Receipt</div>
+              <div id="last-sale-receipt-preview" style="display:flex;justify-content:center;margin-top:8px"></div>
+              <div class="btn-row" style="margin-top:14px">
+                <button class="filter-toggle" onclick="printSaleReceipt()" style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;font-size:13px"><i class="ti ti-printer"></i> Print Receipt</button>
+              </div>
+            </div>
+
+            <!-- Sell list table removed: entries are visible in Reports > Purchase & Sales reports -->
+            <!-- Hidden elements to keep JS renderSell() working without errors.
+                 NOTE: the stat elements (ss-entries/ss-qty/ss-purchase/ss-sell/ss-profit) were
+                 REMOVED from here — they had the same IDs as the real, visible stat boxes
+                 in reports.html, so updateSellStats() was updating these invisible duplicates
+                 instead of the real ones, and Reports page always showed 0. -->
+            <div style="display:none">
+              <table><tbody id="sell-tbody"></tbody><tfoot id="sell-tfoot"></tfoot></table>
+              <div id="sell-empty-msg"></div>
+              <div id="sell-count-badge"></div>
+            </div>
+          </div>
+
+          <!-- Sale Bills Date Wise -->
+          <div id="sale-bills-panel" class="sub-panel" style="display:none;">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-file-invoice"></i> Sale bills (date wise)</div>
+              <div class="sub-tabs" style="margin-bottom:1rem">
+                <button class="sub-tab active" id="sb-mode-cash" onclick="switchSaleBillsMode('cash')"><i class="ti ti-coin"></i> Cash</button>
+                <button class="sub-tab" id="sb-mode-credit" onclick="switchSaleBillsMode('credit')"><i class="ti ti-credit-card"></i> Credited</button>
+              </div>
+              <div class="return-search-row">
+                <div class="field" style="flex:1;margin-bottom:0"><label>Date from</label><input id="sb-date-from" type="date"/></div>
+                <div class="field" style="flex:1;margin-bottom:0"><label>Date to</label><input id="sb-date-to" type="date"/></div>
+                <button class="return-search-btn" style="height:38px" onclick="applySaleBillsFilter()"><i class="ti ti-filter"></i> Apply</button>
+                <button class="return-search-btn" style="height:38px" onclick="resetSaleBillsFilter()"><i class="ti ti-refresh"></i> Reset</button>
+              </div>
+              <div class="result-info" id="sb-result-info" style="display:none"></div>
+              <div id="sb-pagination" class="pg-bar" style="display:none"></div>
+              <div id="sb-bills-wrapper"></div>
+              <div class="empty" id="sb-empty" style="display:none">No sale bills in this range.</div>
+            </div>
+          </div>
+
+          <!-- Sales Return -->
+          <div id="sales-return-panel" class="sub-panel" style="display:none;">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-rotate-2"></i> Sales return entry</div>
+              <div class="return-step-label">Step 1 — Find the original bill</div>
+              <div class="return-search-row">
+                <input id="sr-search-input" type="text" placeholder="Search bill no. or customer name..." onkeydown="if(event.key==='Enter')searchSaleBills()"/>
+                <button class="return-search-btn" onclick="searchSaleBills()"><i class="ti ti-search"></i> Search</button>
+              </div>
+              <div id="sr-bill-results"></div>
+              <div id="sr-items-section" style="display:none">
+                <div class="return-step-label" style="margin-top:1rem">Step 2 — Select items to return</div>
+                <div class="return-items-header"><span></span><span>Item</span><span>Size</span><span>Sold qty</span><span>Return qty</span></div>
+                <div id="sr-items-list"></div>
+                <div style="margin-top:1rem"><div class="return-step-label">Reason (applies to all selected items)</div><input id="sr-reason" type="text" class="return-reason-input" placeholder="e.g. Customer changed mind, size issue..."/></div>
+                <div class="return-save-row">
+                  <button class="filter-apply" onclick="saveSalesReturnBill()"><i class="ti ti-check"></i> Save return bill</button>
+                  <span class="return-save-summary" id="sr-summary">No items selected</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sales Return Bills -->
+          <div id="sales-return-bills-panel" class="sub-panel" style="display:none;">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-file-invoice"></i> Sales return bills</div>
+              <div class="return-search-row">
+                <div class="field" style="flex:1;margin-bottom:0"><label>Date from</label><input id="srb-date-from" type="date"/></div>
+                <div class="field" style="flex:1;margin-bottom:0"><label>Date to</label><input id="srb-date-to" type="date"/></div>
+                <button class="return-search-btn" style="height:38px" onclick="applySalesReturnBillsFilter()"><i class="ti ti-filter"></i> Apply</button>
+                <button class="return-search-btn" style="height:38px" onclick="resetSalesReturnBillsFilter()"><i class="ti ti-refresh"></i> Reset</button>
+              </div>
+              <div class="result-info" id="srb-result-info" style="display:none"></div>
+              <div id="srb-pagination" class="pg-bar" style="display:none"></div>
+              <div class="table-wrap">
+                <table><thead><tr><th>#</th><th>Return Bill No.</th><th>Customer</th><th>Item</th><th>Size</th><th>Qty</th><th>Return Amt</th><th>Reason</th><th>Date</th></tr></thead><tbody id="srb-tbody"></tbody></table>
+                <div class="empty" id="srb-empty" style="display:none">No sales return bills in this range.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sales Borrow -->
+          <div id="sales-borrow-panel" class="sub-panel" style="display:none;">
+            <div class="borrow-container">
+
+                <!-- Summary Cards -->
+                <div class="borrow-summary">
+                    <div class="summary-card">
+                        <div class="summary-icon"><i class="ti ti-wallet"></i></div>
+                        <div class="summary-content">
+                            <div class="summary-value" id="sborrow-total">₹0.00</div>
+                            <div class="summary-label">Total Borrow</div>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-icon"><i class="ti ti-file-invoice"></i></div>
+                        <div class="summary-content">
+                            <div class="summary-value" id="sborrow-pending-count">0</div>
+                            <div class="summary-label">Pending Bills</div>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-icon"><i class="ti ti-credit-card"></i></div>
+                        <div class="summary-content">
+                            <div class="summary-value" id="sborrow-paid-today">₹0.00</div>
+                            <div class="summary-label">Paid Today</div>
+                        </div>
+                    </div>
+                    <div class="summary-card overdue">
+                        <div class="summary-icon"><i class="ti ti-alert-triangle"></i></div>
+                        <div class="summary-content">
+                            <div class="summary-value" id="sborrow-overdue-count">0</div>
+                            <div class="summary-label">Overdue Bills</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="borrow-filters">
+                    <div class="filter-group">
+                        <input type="text" id="sborrow-search" placeholder="Search party or bill no..." oninput="applyBorrowFilters('sales')">
+                        <div class="filter-date-buttons">
+                            <button onclick="setBorrowDateFilter('sales','today')">Today</button>
+                            <button onclick="setBorrowDateFilter('sales','yesterday')">Yesterday</button>
+                            <button onclick="setBorrowDateFilter('sales','week')">This Week</button>
+                            <button onclick="setBorrowDateFilter('sales','month')">This Month</button>
+                            <button onclick="setBorrowDateFilter('sales','lastmonth')">Last Month</button>
+                            <input type="date" id="sborrow-date-from" onchange="applyBorrowFilters('sales')">
+                            <span>to</span>
+                            <input type="date" id="sborrow-date-to" onchange="applyBorrowFilters('sales')">
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <select id="sborrow-status" onchange="applyBorrowFilters('sales')">
+                            <option value="">All Status</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Partial">Partial</option>
+                            <option value="Paid">Paid</option>
+                            <option value="Overdue">Overdue</option>
+                        </select>
+                        <select id="sborrow-sort" onchange="applyBorrowFilters('sales')">
+                            <option value="date_desc">Latest First</option>
+                            <option value="date_asc">Oldest First</option>
+                            <option value="amount_desc">Highest Amount</option>
+                            <option value="amount_asc">Lowest Amount</option>
+                        </select>
+                        <button class="filter-apply" onclick="applyBorrowFilters('sales')"><i class="ti ti-search"></i> Apply</button>
+                        <button class="filter-reset" onclick="resetBorrowFilters('sales')"><i class="ti ti-refresh"></i> Reset</button>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div id="sborrow-pagination" class="pg-bar" style="display:none"></div>
+
+                <!-- Table -->
+                <div class="borrow-table-wrapper">
+                    <table class="borrow-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Bill No.</th>
+                                <th>Party</th>
+                                <th>Phone</th>
+                                <th>Total</th>
+                                <th>Paid</th>
+                                <th>Balance</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sborrow-tbody">
+                            <!-- Rows rendered by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty state -->
+                <div class="borrow-empty" id="sborrow-empty" style="display:none;">
+                    <i class="ti ti-inbox"></i>
+                    <p>No pending borrow records found.</p>
+                </div>
+
+            </div>
+        </div>
+
+        </div>

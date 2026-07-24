@@ -1,0 +1,63 @@
+<div id="items-stock-main-panel" class="main-panel" style="display:none;">
+
+          <!-- All Items List -->
+          <div id="items-list-panel" class="sub-panel active">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-packages"></i> All Items</div>
+              <div class="search-bar">
+                <div class="search-wrap"><i class="ti ti-search"></i><input class="search-input" id="items-search" type="text" placeholder="Search items..." oninput="filterItems()"/></div>
+                <button class="filter-toggle" onclick="loadItems()"><i class="ti ti-refresh"></i> Refresh</button>
+              </div>
+              <div id="items-pagination" class="pg-bar" style="display:none"></div>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>#</th><th>Item Name</th><th>Size</th><th>Department</th><th>Purchase Stock</th><th>Sold</th><th>Remaining Stock</th><th>Projected Margin</th><th>Actions</th></tr></thead>
+                  <tbody id="items-list-tbody"></tbody>
+                </table>
+                <div class="empty" id="items-list-empty">No items found.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Create Items -->
+          <div id="items-create-panel" class="sub-panel" style="display:none;">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-package"></i> Create New Item</div>
+              <div class="fields" style="grid-template-columns: 1fr 1fr 1fr;">
+                <div class="field"><label>Item Name *</label><input id="ci-name" type="text" placeholder="e.g. Cotton Fabric"/></div>
+                <div class="field"><label>Size</label><input id="ci-size" type="text" placeholder="e.g. M, L, XL"/></div>
+                <div class="field"><label>Department</label><select id="ci-dept"><option value="">-- Select Department --</option></select></div>
+                <div class="field"><label>HSN Code</label><input id="ci-hsn" type="text" placeholder="e.g. 520812"/></div>
+                <div class="field"><label>Unit</label><input id="ci-unit" type="text" placeholder="e.g. Meter, KG, Pcs"/></div>
+                <div class="field"><label>Default Margin (%)</label><input id="ci-margin" type="number" placeholder="e.g. 20" min="0" step="0.1" value="0"/></div>
+                <div class="field"><label>Default GST (%)</label><input id="ci-gst" type="number" placeholder="e.g. 18" min="0" step="0.01" value="0"/></div>
+                <div class="field"><label>Min Stock</label><input id="ci-min-stock" type="number" placeholder="e.g. 10" min="0" step="1" value="0"/></div>
+              </div>
+              <div class="btn-row"><button class="add-btn" onclick="createItem()"><i class="ti ti-check"></i> Create Item</button></div>
+            </div>
+          </div>
+
+          <!-- Stock Valuation -->
+          <div id="item-stock-panel" class="sub-panel" style="display:none;">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-chart-pie"></i> Stock Valuation</div>
+              <div class="search-bar">
+                <div class="search-wrap"><i class="ti ti-search"></i><input class="search-input" id="stock-search" type="text" placeholder="Search item..." oninput="filterStock()"/></div>
+                <button class="filter-toggle" onclick="loadStockValuation()"><i class="ti ti-refresh"></i> Refresh</button>
+              </div>
+              <div class="stats" style="margin-bottom:1rem">
+                <div class="stat"><div class="stat-label">Total Items</div><div class="stat-val" id="stock-total-items">0</div></div>
+                <div class="stat"><div class="stat-label">Total Stock Value</div><div class="stat-val" id="stock-total-value">₹0.00</div></div>
+              </div>
+              <div id="stock-pagination" class="pg-bar" style="display:none"></div>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>#</th><th>Item Name</th><th>Department</th><th>Unit</th><th>Stock Qty</th><th>Avg Buy Rate</th><th>Stock Value</th></tr></thead>
+                  <tbody id="stock-tbody"></tbody>
+                </table>
+                <div class="empty" id="stock-empty">No stock data found.</div>
+              </div>
+            </div>
+          </div>
+
+        </div>

@@ -1,0 +1,19 @@
+<div id="parties-main-panel" class="main-panel" style="display:none;">
+          <div id="parties-panel" class="sub-panel active">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-users"></i> Manage Parties</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:8px;margin-bottom:1rem;align-items:end">
+                <div><div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">Party Name *</div><input id="party-new-name" type="text" placeholder="e.g. Ravi Traders" style="width:100%;padding:0 10px;height:34px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-size:13px;font-family:var(--font-sans);" onkeydown="if(event.key==='Enter')addParty()"/></div>
+                <div><div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">Seller No.</div><input id="party-new-seller-no" type="text" placeholder="e.g. 9876543210" style="width:100%;padding:0 10px;height:34px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-size:13px;font-family:var(--font-sans);" onkeydown="if(event.key==='Enter')addParty()"/></div>
+                <div><div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">Address</div><input id="party-new-address" type="text" placeholder="e.g. 123, MG Road, Mumbai" style="width:100%;padding:0 10px;height:34px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-size:13px;font-family:var(--font-sans);" onkeydown="if(event.key==='Enter')addParty()"/></div>
+                <div><div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">GST No.</div><input id="party-new-gst" type="text" placeholder="e.g. 27AAPFU0939F1ZV" style="width:100%;padding:0 10px;height:34px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-size:13px;font-family:var(--font-sans);" onkeydown="if(event.key==='Enter')addParty()"/></div>
+                <button class="filter-apply" onclick="addParty()" style="display:inline-flex;align-items:center;gap:5px;height:34px"><i class="ti ti-plus"></i> Add</button>
+              </div>
+              <div class="search-bar">
+                <div class="search-wrap"><i class="ti ti-search"></i><input class="search-input" id="party-search" type="text" placeholder="Search parties..." oninput="filterParties()"/></div>
+                <button class="filter-toggle" onclick="loadParties()"><i class="ti ti-refresh"></i> Refresh</button>
+              </div>
+              <div id="party-list" class="dept-list"><span style="color:var(--color-text-tertiary);font-size:13px">No parties added yet.</span></div>
+            </div>
+          </div>
+        </div>

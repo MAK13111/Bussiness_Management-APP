@@ -1,0 +1,202 @@
+<div id="reports-main-panel" class="main-panel" style="display:none;">
+
+          <!-- Analyze Report -->
+          <div id="analyze-panel" class="sub-panel active">
+            <!-- Stats -->
+            <div style="margin-bottom:1rem">
+              <div style="font-size:11px;font-weight:600;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.6px;margin-bottom:0.5rem"><i class="ti ti-shopping-cart" style="font-size:12px"></i> Purchase Stats</div>
+              <div class="stats" style="margin-bottom:0.75rem">
+                <div class="stat"><div class="stat-label">Total entries</div><div class="stat-val" id="s-entries">0</div></div>
+                <div class="stat"><div class="stat-label">Total qty</div><div class="stat-val" id="s-qty">0</div></div>
+                <div class="stat"><div class="stat-label">Total purchase (₹)</div><div class="stat-val" id="s-purchase">₹0.00</div></div>
+                <div class="stat"><div class="stat-label">Total sell (₹)</div><div class="stat-val" id="s-sell">₹0.00</div></div>
+                <div class="stat"><div class="stat-label">Total profit (₹)</div><div class="stat-val profit" id="s-profit">₹0.00</div></div>
+              </div>
+              <div style="font-size:11px;font-weight:600;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:.6px;margin-bottom:0.5rem"><i class="ti ti-cash-banknote" style="font-size:12px"></i> Sell Stats</div>
+              <div class="stats" style="margin-bottom:0">
+                <div class="stat"><div class="stat-label">Total sells</div><div class="stat-val" id="ss-entries">0</div></div>
+                <div class="stat"><div class="stat-label">Total qty sold</div><div class="stat-val" id="ss-qty">0</div></div>
+                <div class="stat"><div class="stat-label">Total cost (₹)</div><div class="stat-val" id="ss-purchase">₹0.00</div></div>
+                <div class="stat"><div class="stat-label">Total sell amt (₹)</div><div class="stat-val" id="ss-sell">₹0.00</div></div>
+                <div class="stat"><div class="stat-label">Total profit (₹)</div><div class="stat-val profit" id="ss-profit">₹0.00</div></div>
+              </div>
+            </div>
+
+            <!-- Barcode Viewer -->
+            <div class="bc-section" id="bc-section" style="display:none">
+              <div class="bc-header">
+                <div><div class="bc-title" id="bc-title">Barcodes</div><div class="bc-meta" id="bc-meta"></div></div>
+                <div style="display:flex;gap:8px"><button class="print-btn" onclick="printBarcodes()"><i class="ti ti-printer"></i> Print all</button><button class="print-btn" onclick="closeBarcodes()"><i class="ti ti-x"></i> Close</button></div>
+              </div>
+              <div class="bc-grid" id="bc-grid"></div>
+            </div>
+
+            <!-- Inner tabs: only 3 tabs — Purchases (bill cards), Sells (bill cards), Sold Items -->
+            <div class="analyze-tabs">
+              <button class="analyze-tab active" id="atab-purchases" onclick="switchAnalyzeTab('purchases')"><i class="ti ti-file-invoice"></i> Purchase Bills</button>
+              <button class="analyze-tab" id="atab-sells" onclick="switchAnalyzeTab('sells')"><i class="ti ti-receipt"></i> Sale Bills</button>
+              <button class="analyze-tab" id="atab-replace" onclick="switchAnalyzeTab('replace')"><i class="ti ti-replace"></i> Replace Bills</button>
+              <button class="analyze-tab" id="atab-sold" onclick="switchAnalyzeTab('sold')"><i class="ti ti-tag"></i> Sold Items</button>
+            </div>
+
+            <!-- Report Filters -->
+            <div class="borrow-filters">
+              <div class="filter-group date-row">
+                <div class="filter-date-buttons">
+                  <button onclick="setReportDate('today')">Today</button>
+                  <button onclick="setReportDate('yesterday')">Yesterday</button>
+                  <button onclick="setReportDate('week')">This Week</button>
+                  <button onclick="setReportDate('month')">This Month</button>
+                  <button onclick="setReportDate('lastmonth')">Last Month</button>
+                  <input type="date" id="report-date-from">
+                  <span>to</span>
+                  <input type="date" id="report-date-to">
+                </div>
+                <div class="filter-actions">
+                  <button class="filter-apply" onclick="applyReportFilters()"><i class="ti ti-search"></i> Apply</button>
+                  <button class="filter-reset" onclick="resetReportFilters()"><i class="ti ti-refresh"></i> Reset</button>
+                </div>
+              </div>
+              <div class="filter-group search-row">
+                <input type="text" id="report-search-party" placeholder="Party Name">
+                <input type="text" id="report-search-bill" placeholder="Bill No.">
+                <input type="text" id="report-search-product" placeholder="Product">
+                <select id="report-payment-type">
+                  <option value="">All</option>
+                  <option value="cash">Cash</option>
+                  <option value="credit">Credit</option>
+                </select>
+                <select id="report-sort">
+                  <option value="date_desc">Date (Newest first)</option>
+                  <option value="date_asc">Date (Oldest first)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Purchase Bills card view (replaces raw Purchases table) -->
+            <div id="analyze-purchases-panel">
+              <!-- Hidden elements to keep renderAnalyzePurchase() / stats JS working silently -->
+              <div style="display:none">
+                <input id="p-search"/><input id="f-fil-party"/><input id="f-fil-item"/>
+                <input id="f-fil-price-min"/><input id="f-fil-price-max"/>
+                <input id="f-fil-date-from"/><input id="f-fil-date-to"/>
+                <select id="f-fil-dept"></select><select id="f-fil-sort"></select>
+                <div id="p-filter-panel"></div><div id="p-clear-btn"></div>
+                <div id="p-result-info"></div><div id="p-filter-btn"></div>
+                <table><tbody id="analyze-p-tbody"></tbody><tfoot id="analyze-p-tfoot"></tfoot></table>
+                <div id="analyze-p-empty"></div>
+                <a id="analyze-p-dl-link"></a>
+              </div>
+              <div class="result-info" id="rpb-result-info" style="display:none"></div>
+              <div id="rpb-pagination" class="pg-bar" style="display:none"></div>
+              <div id="rpb-bills-wrapper"></div>
+              <div class="empty" id="rpb-empty" style="display:none">No purchase bills found.</div>
+            </div>
+
+            <!-- Sale Bills card view (replaces raw Sells table) -->
+            <div id="analyze-sells-panel" style="display:none">
+              <!-- Hidden elements to keep renderAnalyzeSell() / stats JS working silently -->
+              <div style="display:none">
+                <input id="s-search"/><input id="s-fil-customer"/><input id="s-fil-item"/>
+                <input id="s-fil-price-min"/><input id="s-fil-price-max"/>
+                <input id="s-fil-date-from"/><input id="s-fil-date-to"/>
+                <input id="s-fil-bill"/>
+                <select id="s-fil-payment"></select><select id="s-fil-sort"></select>
+                <div id="s-filter-panel"></div><div id="s-clear-btn"></div>
+                <div id="s-result-info"></div><div id="s-filter-btn"></div>
+                <table><tbody id="analyze-s-tbody"></tbody><tfoot id="analyze-s-tfoot"></tfoot></table>
+                <div id="analyze-s-empty"></div>
+                <a id="analyze-s-dl-link"></a>
+              </div>
+              <div class="report-bills-toolbar">
+                <div class="report-bills-mode-group">
+                  <button class="report-mode-btn active" id="rsb-mode-cash" onclick="switchReportSaleBillsMode('cash')"><i class="ti ti-coin"></i> Cash</button>
+                  <button class="report-mode-btn" id="rsb-mode-credit" onclick="switchReportSaleBillsMode('credit')"><i class="ti ti-credit-card"></i> Credited</button>
+                </div>
+                <div class="report-bills-date-group">
+                  <div class="report-date-field"><label>From</label><input id="rsb-date-from" type="date"/></div>
+                  <div class="report-date-field"><label>To</label><input id="rsb-date-to" type="date"/></div>
+                  <button class="filter-apply" onclick="applyReportSaleBillsFilter()"><i class="ti ti-filter"></i> Apply</button>
+                  <button class="filter-reset" onclick="resetReportSaleBillsFilter()"><i class="ti ti-refresh"></i> Reset</button>
+                </div>
+              </div>
+              <div class="result-info" id="rsb-result-info" style="display:none"></div>
+              <div id="rsb-pagination" class="pg-bar" style="display:none"></div>
+              <div id="rsb-bills-wrapper"></div>
+              <div class="empty" id="rsb-empty" style="display:none">No sale bills found.</div>
+            </div>
+
+            <!-- Replace Bills card view (mirrors Sale Bills card view) -->
+            <div id="analyze-replace-panel" style="display:none">
+              <div class="report-bills-toolbar">
+                <div class="report-bills-date-group">
+                  <div class="report-date-field"><label>From</label><input id="rrb-date-from" type="date"/></div>
+                  <div class="report-date-field"><label>To</label><input id="rrb-date-to" type="date"/></div>
+                  <button class="filter-apply" onclick="applyReportReplaceBillsFilter()"><i class="ti ti-filter"></i> Apply</button>
+                  <button class="filter-reset" onclick="resetReportReplaceBillsFilter()"><i class="ti ti-refresh"></i> Reset</button>
+                </div>
+              </div>
+              <div class="result-info" id="rrb-result-info" style="display:none"></div>
+              <div id="rrb-bills-wrapper"></div>
+              <div class="empty" id="rrb-empty" style="display:none">No replace bills found.</div>
+            </div>
+
+            <!-- Sold Items sub‑sub -->
+            <div id="analyze-sold-panel" style="display:none">
+              <div class="search-bar">
+                <div class="search-wrap"><i class="ti ti-search"></i><input class="search-input" id="sold-search" type="text" placeholder="Search by item, size or party..." oninput="onSoldSearch()"/></div>
+                <button class="clear-search" id="sold-clear-btn" onclick="clearSoldSearch()" style="display:none"><i class="ti ti-x"></i> Clear</button>
+              </div>
+              <div class="result-info" id="sold-result-info" style="display:none"></div>
+              <div id="analyze-sold-pagination" class="pg-bar" style="display:none"></div>
+              <div class="table-wrap">
+                <table>
+                  <colgroup><col style="width:28px"><col style="width:110px"><col style="width:120px"><col style="width:55px"><col style="width:55px"><col style="width:90px"><col style="width:90px"><col style="width:90px"></colgroup>
+                  <thead><tr><th>#</th><th>Party</th><th>Item</th><th>Size</th><th>Sold</th><th>Sell/Unit</th><th>Sell Total</th><th>Date</th></tr></thead>
+                  <tbody id="analyze-sold-tbody"></tbody>
+                  <tfoot id="analyze-sold-tfoot"></tfoot>
+                </table>
+                <div class="empty" id="analyze-sold-empty">No sold items yet.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Monthly Report -->
+          <div id="monthly-report-panel" class="sub-panel" style="display:none;">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-calendar-stats"></i> Monthly Reports</div>
+              <div class="search-bar">
+                <div class="field" style="flex:1;margin-bottom:0"><label>Year</label><select id="mr-year" onchange="loadMonthlyReport()"></select></div>
+                <button class="filter-toggle" onclick="loadMonthlyReport()"><i class="ti ti-refresh"></i> Load Report</button>
+              </div>
+              <div class="table-wrap">
+                <table><thead><tr><th>Month</th><th>Purchases (₹)</th><th>Sales (₹)</th><th>Profit (₹)</th><th>Items Sold</th></tr></thead><tbody id="mr-tbody"></tbody></table>
+                <div class="empty" id="mr-empty">No data for selected year.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Profit Report -->
+          <div id="profit-report-panel" class="sub-panel" style="display:none;">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-trending-up"></i> Profit Report</div>
+              <div class="search-bar">
+                <div class="field" style="flex:1;margin-bottom:0"><label>Date From</label><input id="pr-date-from" type="date"/></div>
+                <div class="field" style="flex:1;margin-bottom:0"><label>Date To</label><input id="pr-date-to" type="date"/></div>
+                <button class="filter-toggle" onclick="loadProfitReport()"><i class="ti ti-filter"></i> Apply</button>
+                <button class="filter-toggle" onclick="resetProfitReport()"><i class="ti ti-refresh"></i> Reset</button>
+              </div>
+              <div class="stats" style="margin-bottom:1rem">
+                <div class="stat"><div class="stat-label">Total Purchases</div><div class="stat-val" id="pr-total-purchases">₹0.00</div></div>
+                <div class="stat"><div class="stat-label">Total Sales</div><div class="stat-val" id="pr-total-sales">₹0.00</div></div>
+                <div class="stat"><div class="stat-label">Total Profit</div><div class="stat-val profit" id="pr-total-profit">₹0.00</div></div>
+                <div class="stat"><div class="stat-label">Profit Margin</div><div class="stat-val" id="pr-profit-margin">0%</div></div>
+              </div>
+              <div class="table-wrap">
+                <table><thead><tr><th>#</th><th>Date</th><th>Party/Customer</th><th>Item</th><th>Qty</th><th>Buy Total</th><th>Sell Total</th><th>Profit</th></tr></thead><tbody id="pr-tbody"></tbody></table>
+                <div class="empty" id="pr-empty">No data for selected period.</div>
+              </div>
+            </div>
+          </div>
+
+        </div>

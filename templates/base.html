@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Purchase Tracker</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="/static/Styles/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-layout">
+
+    <!-- ===== SIDEBAR (Main Options Only) ===== -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon"><i class="ti ti-box-seam"></i></div>
+        <div class="sidebar-brand-text">Purchase Tracker</div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="sidebar-link active" data-main="dashboard" onclick="switchMain('dashboard')">
+          <i class="ti ti-layout-dashboard"></i> Dashboard
+        </button>
+        <button class="sidebar-link" data-main="purchases" onclick="switchMain('purchases')">
+          <i class="ti ti-shopping-cart"></i> Purchases
+        </button>
+        <button class="sidebar-link" data-main="sales" onclick="switchMain('sales')">
+          <i class="ti ti-cash-banknote"></i> Sells
+        </button>
+        <button class="sidebar-link" data-main="items-stock" onclick="switchMain('items-stock')">
+          <i class="ti ti-packages"></i> Items & Stock
+        </button>
+        <button class="sidebar-link" data-main="parties" onclick="switchMain('parties')">
+          <i class="ti ti-users"></i> Parties
+        </button>
+        <button class="sidebar-link" data-main="departments" onclick="switchMain('departments')">
+          <i class="ti ti-building-store"></i> Departments
+        </button>
+        <button class="sidebar-link" data-main="reports" onclick="switchMain('reports')">
+          <i class="ti ti-chart-bar"></i> Reports
+        </button>
+        <button class="sidebar-link" data-main="tally" onclick="switchMain('tally')">
+          <i class="ti ti-receipt"></i> Tally
+        </button>
+        <button class="sidebar-link" data-main="settings" onclick="switchMain('settings')">
+          <i class="ti ti-settings"></i> Settings
+        </button>
+      </nav>
+
+      <div class="sidebar-spacer"></div>
+      <div class="sidebar-footer">
+        <span class="sidebar-mode-pill"><i class="ti ti-circle-filled" style="font-size:8px"></i> <span id="sidebar-mode-label">Cash mode</span></span>
+        <button class="theme-toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()"><i class="ti ti-moon" id="theme-toggle-icon"></i></button>
+      </div>
+    </aside>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <div class="main-content">
+      <div class="wrap">
+
+        <!-- Page Header: Title + Sub‑Tabs -->
+        <div class="page-header">
+          <h1 id="main-page-title">Dashboard</h1>
+          <div class="sub-tabs-wrapper" id="sub-tabs-wrapper">
+            <!-- Sub-tabs injected by JavaScript -->
+          </div>
+        </div>
+
+        <!-- Hidden count badges for JS -->
+        <span id="count-badge" style="display:none"></span>
+        <span id="sell-count-badge" style="display:none"></span>
+
+        <!-- ===== DASHBOARD PANEL ===== -->
+        {% include 'dashboard.html' %}<!-- end dashboard-content -->
+
+        <!-- ===== PURCHASES MAIN PANEL ===== -->
+        {% include 'purchases.html' %}<!-- /purchases-main-panel -->
+
+        <!-- ===== SALES MAIN PANEL ===== -->
+        {% include 'sales.html' %}<!-- /sales-main-panel -->
+
+        <!-- ===== ITEMS & STOCK MAIN PANEL ===== -->
+        {% include 'items.html' %}<!-- /items-stock-main-panel -->
+
+        <!-- ===== PARTIES MAIN PANEL ===== -->
+        {% include 'parties.html' %}
+
+        <!-- ===== DEPARTMENTS MAIN PANEL ===== -->
+        {% include 'department.html' %}
+
+        <!-- ===== REPORTS MAIN PANEL ===== -->
+        {% include 'reports.html' %}<!-- /reports-main-panel -->
+
+        <!-- ===== TALLY MAIN PANEL ===== -->
+        {% include 'tally.html' %}
+
+        <!-- ===== SETTINGS MAIN PANEL ===== -->
+        {% include 'setting.html' %}<!-- /settings-main-panel -->
+
+      </div><!-- /wrap -->
+    </div><!-- /main-content -->
+  </div><!-- /app-layout -->
+
+  <!-- ===== TOAST, DRAWER, MODALS ===== -->
+  <div class="toast" id="toast"></div>
+  <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+  <div class="drawer" id="drawer">
+    <div class="drawer-header"><div class="drawer-title" id="drawer-title">Details</div><button class="drawer-close" onclick="closeDrawer()"><i class="ti ti-x"></i></button></div>
+    <div class="drawer-body" id="drawer-body"></div>
+  </div>
+
+  <!-- ===== SIZE MODAL ===== -->
+  <div id="size-modal-overlay" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;padding:16px">
+    <div class="size-modal">
+      <div class="size-modal-header"><span class="size-modal-title"><i class="ti ti-ruler"></i> Add Sizes</span><button class="drawer-close" onclick="closeSizeModal()" type="button"><i class="ti ti-x"></i></button></div>
+      <div class="size-modal-body">
+        <div style="margin-bottom:12px;display:flex;align-items:center;gap:10px">
+          <label style="font-size:13px;font-weight:600;white-space:nowrap;color:var(--color-text-secondary)"><i class="ti ti-building-store" style="margin-right:4px"></i>Department</label>
+          <select id="sm-common-dept" style="flex:1;padding:7px 10px;border-radius:8px;border:1px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--color-text-primary);font-size:13px">
+            <option value="">-- Select Department --</option>
+          </select>
+        </div>
+        <div class="sm-table-header"><span>Size</span><span>Quantity</span><span></span></div>
+        <div id="size-modal-rows"></div>
+        <button class="sm-add-row-btn" onclick="addSizeModalRow()" type="button"><i class="ti ti-plus"></i> Add Size</button>
+      </div>
+      <div class="size-modal-footer">
+        <button class="sm-cancel-btn" onclick="closeSizeModal()" type="button">Cancel</button>
+        <button class="sm-save-btn" onclick="saveSizeModal()" type="button"><i class="ti ti-check"></i> Save Sizes</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="payment-modal">
+      <div class="modal-content">
+          <div class="modal-header">
+              <span class="modal-title">Record Payment</span>
+              <button class="modal-close" onclick="closePaymentModal()"><i class="ti ti-x"></i></button>
+          </div>
+          <div class="modal-body">
+              <div class="payment-details">
+                  <div><span>Party:</span> <strong id="pay-party"></strong></div>
+                  <div><span>Bill No.:</span> <strong id="pay-billno"></strong></div>
+                  <div><span>Total Amount:</span> <strong id="pay-total"></strong></div>
+                  <div><span>Already Paid:</span> <strong id="pay-paid"></strong></div>
+                  <div><span>Remaining Balance:</span> <strong id="pay-balance"></strong></div>
+              </div>
+              <div class="payment-form">
+                  <div class="field"><label>Amount *</label><input type="number" id="pay-amount" step="0.01" min="0.01" placeholder="Enter amount"></div>
+                  <div class="field"><label>Payment Date</label><input type="date" id="pay-date"></div>
+                  <div class="field"><label>Payment Mode</label>
+                      <select id="pay-mode">
+                          <option value="Cash">Cash</option>
+                          <option value="UPI">UPI</option>
+                          <option value="Bank">Bank</option>
+                          <option value="Card">Card</option>
+                          <option value="Other">Other</option>
+                      </select>
+                  </div>
+                  <div class="field"><label>Reference No.</label><input type="text" id="pay-ref" placeholder="Optional"></div>
+                  <div class="field"><label>Notes</label><textarea id="pay-notes" rows="2" placeholder="Optional notes"></textarea></div>
+              </div>
+              <div class="payment-history" id="pay-history" style="display:none;">
+                  <hr>
+                  <h4>Payment History</h4>
+                  <ul id="pay-history-list"></ul>
+              </div>
+          </div>
+          <div class="modal-footer">
+              <button class="btn-cancel" onclick="closePaymentModal()">Cancel</button>
+              <button class="btn-partial" onclick="savePayment('partial')">Partial Payment</button>
+              <button class="btn-save" onclick="savePayment('full')">Save Payment</button>
+          </div>
+      </div>
+  </div>
+
+  <!-- ===== EDIT MODAL (Purchase / Sale) ===== -->
+  <div class="modal-overlay" id="edit-modal" style="display:none;">
+    <div class="modal-content" style="max-width:700px;width:95%;">
+      <div class="modal-header">
+        <span class="modal-title" id="edit-modal-title">Edit Bill</span>
+        <button class="modal-close" onclick="closeEditModal()"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="modal-body" id="edit-modal-body">
+        <!-- Dynamic content -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+        <button class="btn-save" id="edit-save-btn" onclick="submitEdit()"><i class="ti ti-check"></i> Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== EDIT ITEM MODAL (Items & Stock) ===== -->
+  <div class="modal-overlay" id="item-edit-modal" style="display:none;">
+    <div class="modal-content" style="max-width:700px;width:95%;">
+      <div class="modal-header">
+        <span class="modal-title" id="item-edit-modal-title">Edit Item</span>
+        <button class="modal-close" onclick="closeItemEditModal()"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="modal-body" id="item-edit-modal-body">
+        <!-- Dynamic content -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeItemEditModal()">Cancel</button>
+        <button class="btn-save" onclick="saveEditItem()"><i class="ti ti-check"></i> Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== BILL BARCODE MODAL (Reports — Purchase Bills) ===== -->
+  <div class="modal-overlay" id="bill-barcode-modal" style="display:none;">
+    <div class="modal-content" style="max-width:800px;width:95%;">
+      <div class="modal-header">
+        <span class="modal-title" id="bill-barcode-modal-title">Bill Barcodes</span>
+        <button class="modal-close" onclick="closeBillBarcodes()"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="modal-body" id="bill-barcode-modal-body" style="max-height:65vh;overflow-y:auto;">
+        <!-- Dynamic content -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeBillBarcodes()">Close</button>
+        <button class="btn-save" onclick="printBillBarcodes()"><i class="ti ti-printer"></i> Print All</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+
+  <!-- ===== App Scripts (order matters: config -> core -> modules -> ui -> main) ===== -->
+  <script src="/static/Scripts/config/tabs.js"></script>
+
+  <script src="/static/Scripts/core/navigation.js"></script>
+  <script src="/static/Scripts/core/theme.js"></script>
+  <script src="/static/Scripts/core/toast.js"></script>
+  <script src="/static/Scripts/core/utils.js"></script>
+
+  <script src="/static/Scripts/ui/pagination.js"></script>
+
+  <script src="/static/Scripts/modules/dashboard.js"></script>
+
+  <script src="/static/Scripts/modules/purchases/entry.js"></script>
+  <script src="/static/Scripts/modules/purchases/bills.js"></script>
+  <script src="/static/Scripts/modules/purchases/returns.js"></script>
+  <script src="/static/Scripts/modules/purchases/borrow.js"></script>
+  <script src="/static/Scripts/modules/purchases/filters.js"></script>
+
+  <script src="/static/Scripts/modules/sales/entry.js"></script>
+  <script src="/static/Scripts/modules/sales/bills.js"></script>
+  <script src="/static/Scripts/modules/sales/returns.js"></script>
+  <script src="/static/Scripts/modules/sales/replace.js"></script>
+  <script src="/static/Scripts/modules/sales/borrow.js"></script>
+  <script src="/static/Scripts/modules/sales/receipt.js"></script>
+  <script src="/static/Scripts/modules/sales/filters.js"></script>
+
+  <script src="/static/Scripts/modules/items/items.js"></script>
+  <script src="/static/Scripts/modules/items/stock.js"></script>
+  <script src="/static/Scripts/modules/items/barcode.js"></script>
+
+  <script src="/static/Scripts/modules/parties.js"></script>
+  <script src="/static/Scripts/modules/departments.js"></script>
+
+  <script src="/static/Scripts/modules/reports/analyze.js"></script>
+  <script src="/static/Scripts/modules/reports/monthly.js"></script>
+  <script src="/static/Scripts/modules/reports/profit.js"></script>
+  <script src="/static/Scripts/modules/reports/filters.js"></script>
+
+  <script src="/static/Scripts/modules/tally/vouchers.js"></script>
+  <script src="/static/Scripts/modules/tally/ledgers.js"></script>
+  <script src="/static/Scripts/modules/tally/trialBalance.js"></script>
+  <script src="/static/Scripts/modules/tally/balanceSheet.js"></script>
+  <script src="/static/Scripts/modules/tally/profitLoss.js"></script>
+  <script src="/static/Scripts/modules/tally/dayBook.js"></script>
+  <script src="/static/Scripts/modules/tally/ledgerStatement.js"></script>
+
+  <script src="/static/Scripts/modules/settings/backup.js"></script>
+  <script src="/static/Scripts/modules/settings/users.js"></script>
+  <script src="/static/Scripts/modules/settings/accounts.js"></script>
+  <script src="/static/Scripts/modules/settings/shopInfo.js"></script>
+
+  <script src="/static/Scripts/ui/drawer.js"></script>
+  <script src="/static/Scripts/ui/modal.js"></script>
+  <script src="/static/Scripts/ui/sizeModal.js"></script>
+  <script src="/static/Scripts/ui/payment.js"></script>
+  <script src="/static/Scripts/ui/scanner.js"></script>
+  <script src="/static/Scripts/ui/discount.js"></script>
+
+  <script src="/static/Scripts/main.js"></script>
+</body>
+</html>
