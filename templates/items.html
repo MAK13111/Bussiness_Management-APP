@@ -1,0 +1,123 @@
+<div id="items-stock-main-panel" class="main-panel" style="display:none;">
+
+  <!-- All Items List -->
+  <div id="items-list-panel" class="sub-panel active">
+    <div class="form-card">
+      <div class="form-title"><i class="ti ti-packages"></i> All Items</div>
+      <div class="search-bar">
+        <div class="search-wrap"><i class="ti ti-search"></i><input class="search-input" id="items-search" type="text"
+            placeholder="Search items..." oninput="filterItems()" /></div>
+        <button class="filter-toggle" onclick="loadItems()"><i class="ti ti-refresh"></i> Refresh</button>
+      </div>
+      <div id="items-pagination" class="pg-bar" style="display:none"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Item Name</th>
+              <th>Size</th>
+              <th>Department</th>
+              <th>Purchase Stock</th>
+              <th>Sold</th>
+              <th>Remaining Stock</th>
+              <th>Projected Margin</th>
+            </tr>
+          </thead>
+          <tbody id="items-list-tbody"></tbody>
+        </table>
+        <div class="empty" id="items-list-empty">No items found.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- All Items List -->
+
+  <!-- Stock Valuation -->
+  <div id="item-stock-panel" class="sub-panel" style="display:none;">
+    <div class="form-card">
+      <div class="form-title"><i class="ti ti-chart-pie"></i> Stock Valuation</div>
+      <div class="search-bar">
+        <div class="search-wrap"><i class="ti ti-search"></i><input class="search-input" id="stock-search" type="text"
+            placeholder="Search item..." oninput="filterStock()" /></div>
+        <button class="filter-toggle" onclick="loadStockValuation()"><i class="ti ti-refresh"></i> Refresh</button>
+      </div>
+      <div class="stats" style="margin-bottom:1rem">
+        <div class="stat">
+          <div class="stat-label">Total Items</div>
+          <div class="stat-val" id="stock-total-items">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Total Stock Value</div>
+          <div class="stat-val" id="stock-total-value">₹0.00</div>
+        </div>
+      </div>
+      <div id="stock-pagination" class="pg-bar" style="display:none"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Item Name</th>
+              <th>Department</th>
+              <th>Unit</th>
+              <th>Stock Qty</th>
+              <th>Avg Buy Rate</th>
+              <th>Stock Value</th>
+            </tr>
+          </thead>
+          <tbody id="stock-tbody"></tbody>
+        </table>
+        <div class="empty" id="stock-empty">No stock data found.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Old Data Stock (legacy stock imported from old_purchase_data.xlsx) -->
+  <div id="old-data-stock-panel" class="sub-panel" style="display:none;">
+    <div class="form-card">
+      <div class="form-title"><i class="ti ti-archive"></i> Old Data Stock</div>
+      <div class="search-bar">
+        <div class="search-wrap"><i class="ti ti-search"></i><input class="search-input" id="old-stock-search" type="text"
+            placeholder="Search item code or unique ID..." oninput="filterOldStock()" /></div>
+        <button class="filter-toggle" onclick="loadOldDataStock()"><i class="ti ti-refresh"></i> Refresh</button>
+      </div>
+      <div class="stats" style="margin-bottom:1rem">
+        <div class="stat">
+          <div class="stat-label">Total Rows</div>
+          <div class="stat-val" id="old-stock-total-items">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Remaining Qty</div>
+          <div class="stat-val" id="old-stock-total-qty">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Total Stock Value</div>
+          <div class="stat-val" id="old-stock-total-value">₹0.00</div>
+        </div>
+      </div>
+      <div id="old-stock-pagination" class="pg-bar" style="display:none"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Unique ID</th>
+              <th>Item Code</th>
+              <th>Size</th>
+              <th>Purchase MRP</th>
+              <th>Sale MRP</th>
+              <th>Remaining</th>
+              <th>Sold</th>
+              <th>Return</th>
+              <th>Stock Value</th>
+            </tr>
+          </thead>
+          <tbody id="old-stock-tbody"></tbody>
+        </table>
+        <div class="empty" id="old-stock-empty">No old data found.</div>
+      </div>
+    </div>
+  </div>
+
+</div>

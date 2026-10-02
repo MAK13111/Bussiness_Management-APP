@@ -1,0 +1,88 @@
+<div id="settings-main-panel" class="main-panel" style="display:none;">
+
+          <!-- Backup -->
+          <div id="settings-backup-panel" class="sub-panel active">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-database-export"></i> Data Backup</div>
+              <div style="margin-bottom:1rem"><p style="color:var(--color-text-secondary);font-size:13px;margin-bottom:12px">Create a complete backup of your database. Backups are stored in the 'backups' folder with timestamps.</p><button class="add-btn" onclick="createBackup()"><i class="ti ti-database"></i> Create Backup Now</button></div>
+              <div id="backup-list"><div style="font-size:13px;color:var(--color-text-tertiary)">Loading backups...</div></div>
+            </div>
+          </div>
+
+          <!-- Export -->
+          <div id="settings-export-panel" class="sub-panel" style="display:none;">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-file-export"></i> Data Export</div>
+              <div style="margin-bottom:1rem"><p style="color:var(--color-text-secondary);font-size:13px;margin-bottom:12px">Download a full backup file of the entire database. Use this same file later to restore everything via Import.</p><button class="add-btn" id="export-download-btn" onclick="exportBackupWithProgress()"><i class="ti ti-file-export"></i> Download Full Backup</button>
+              <div id="export-progress-wrap" style="display:none;margin-top:14px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                  <span id="export-progress-label" style="font-size:12px;color:var(--color-text-secondary)">Preparing download...</span>
+                  <span id="export-progress-pct" style="font-size:12px;font-weight:600;color:var(--color-accent)">0%</span>
+                </div>
+                <div style="height:6px;background:var(--color-border-secondary);border-radius:99px;overflow:hidden">
+                  <div id="export-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--color-accent),var(--color-accent-hover,#60a5fa));border-radius:99px;transition:width 0.2s ease"></div>
+                </div>
+              </div></div>
+            </div>
+          </div>
+
+          <!-- Import -->
+          <div id="settings-import-panel" class="sub-panel" style="display:none;">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-file-import"></i> Data Import</div>
+              <div style="margin-bottom:1rem"><p style="color:var(--color-text-secondary);font-size:13px;margin-bottom:12px">Import a backup file (.zip made by this app, or an older .sql file). If the database doesn't exist, it will be created fresh from this file. If it already exists, all of its current data will be replaced with this file's data.</p><input type="file" id="import-file" accept=".zip,.sql" style="margin-bottom:12px;display:block"/><button class="add-btn" onclick="importBackup()"><i class="ti ti-upload"></i> Import Backup</button></div>
+            </div>
+          </div>
+
+          <!-- Users -->
+          <div id="settings-users-panel" class="sub-panel" style="display:none;">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-users-group"></i> Manage Users</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1rem">
+                <div>
+                  <h4 style="font-size:14px;color:var(--color-text-primary);margin-bottom:8px">Add User</h4>
+                  <div class="fields" style="grid-template-columns:1fr 1fr;"><div class="field"><label>Username *</label><input id="user-new-username" type="text" placeholder="e.g. staff1"/></div><div class="field"><label>Password *</label><input id="user-new-password" type="password" placeholder="At least 6 characters"/></div><div class="field"><label>Role</label><select id="user-new-role"><option value="user">User</option><option value="admin">Admin</option></select></div></div>
+                  <button class="add-btn" onclick="addUser()"><i class="ti ti-plus"></i> Add User</button>
+                </div>
+                <div><h4 style="font-size:14px;color:var(--color-text-primary);margin-bottom:8px">User List</h4><div id="user-list" style="font-size:13px;color:var(--color-text-secondary)">Loading users...</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Thermal Printer -->
+          <div id="settings-thermal-printer-panel" class="sub-panel" style="display:none;">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-printer"></i> Manage Thermal Printer</div>
+              <p style="color:var(--color-text-secondary);font-size:13px;margin-bottom:12px">Enter the USB Vendor ID (VID) and Product ID (PID) of your thermal printer. Find them in Device Manager: printer, Properties, Details, Hardware Ids (looks like USB\VID_0416&amp;PID_5011).</p>
+              <div class="fields" style="grid-template-columns:1fr 1fr;">
+                <div class="field"><label>Vendor ID (VID) *</label><input id="tp-vid" type="text" placeholder="e.g. 0416" maxlength="10"/></div>
+                <div class="field"><label>Product ID (PID) *</label><input id="tp-pid" type="text" placeholder="e.g. 5011" maxlength="10"/></div>
+                <div class="field"><label>Paper Width</label><select id="tp-paper-width"><option value="80">80 mm</option><option value="58">58 mm</option></select></div>
+                <div class="field"><label>Auto Cut</label><select id="tp-auto-cut"><option value="1">Yes</option><option value="0">No</option></select></div>
+                <div class="field" style="grid-column:span 2"><label>Print receipt on Save Sale</label><select id="tp-enabled"><option value="1">Enabled (thermal printer)</option><option value="0">Disabled (use browser print)</option></select></div>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="add-btn" onclick="saveThermalPrinter()"><i class="ti ti-check"></i> Save Printer Settings</button>
+                <button class="add-btn" onclick="testThermalPrinter()"><i class="ti ti-printer"></i> Print Test Page</button>
+              </div>
+              <div id="tp-status" style="font-size:13px;margin-top:10px"></div>
+            </div>
+          </div>
+
+          <!-- Shop Info -->
+          <div id="settings-shop-info-panel" class="sub-panel" style="display:none;">
+            <div class="form-card">
+              <div class="form-title"><i class="ti ti-building-store"></i> Shop Info (for Sale Receipts)</div>
+              <p style="color:var(--color-text-secondary);font-size:13px;margin-bottom:12px">These details will be printed at the top of the Sale Receipt.</p>
+              <div class="fields" style="grid-template-columns:1fr 1fr;">
+                <div class="field"><label>Shop Name</label><input id="shop-name" type="text" placeholder="e.g. Sharma Garments"/></div>
+                <div class="field"><label>Phone</label><input id="shop-phone" type="text" placeholder="e.g. 9876543210"/></div>
+                <div class="field" style="grid-column:span 2"><label>Address</label><input id="shop-address" type="text" placeholder="e.g. Shop No.5, Main Market, Pune"/></div>
+                <div class="field"><label>GST No.</label><input id="shop-gst" type="text" placeholder="e.g. 27ABCDE1234F1Z5"/></div>
+                <div class="field"><label>Receipt Footer Note</label><input id="shop-footer" type="text" placeholder="e.g. Thank you! Visit again"/></div>
+              </div>
+              <button class="add-btn" onclick="saveShopInfo()"><i class="ti ti-check"></i> Save Shop Info</button>
+            </div>
+          </div>
+
+        </div>
