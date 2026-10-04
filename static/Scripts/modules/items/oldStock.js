@@ -57,6 +57,7 @@ function renderOldDataStock(data, offset) {
       <td>${offset + i + 1}</td>
       <td>${_odEsc(r.uniqee_id)}</td>
       <td>${_odEsc(r.item_code)}</td>
+      <td>${r.barcode ? _odEsc(r.barcode) : '—'}</td>
       <td>${r.size ? `<span class="item-size-badge">${_odEsc(r.size)}</span>` : '—'}</td>
       <td>${fmt(r.buy_mrp || 0)}</td>
       <td>${fmt(r.sell_mrp || 0)}</td>

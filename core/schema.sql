@@ -692,15 +692,18 @@ CREATE TABLE IF NOT EXISTS old_data (
     uniqee_id     BIGINT UNIQUE,
     id            BIGSERIAL PRIMARY KEY,
     item_code     TEXT NOT NULL,
+    size          TEXT DEFAULT '',
     buy_mrp       NUMERIC(18,2) DEFAULT 0,
     sell_mrp      NUMERIC(18,2) DEFAULT 0,
     remaining     NUMERIC(18,2) DEFAULT 0,
     sold          NUMERIC(18,2) DEFAULT 0,
+    barcode       BIGINT,
     imported_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_return     SMALLINT DEFAULT 0
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_old_data_uniqee_id ON old_data(uniqee_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_old_data_barcode ON old_data(barcode) WHERE barcode IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_old_data_item_code ON old_data(LOWER(item_code));
 CREATE INDEX IF NOT EXISTS idx_old_data_item_code_trim ON old_data(LOWER(TRIM(item_code)));
 CREATE INDEX IF NOT EXISTS idx_purchase_item_barcode ON purchase_item(barcode_no);
