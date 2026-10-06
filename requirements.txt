@@ -1,0 +1,9 @@
+flask
+openpyxl
+psycopg2-binary
+waitress
+python-dotenv
+python-escpos
+pyusb
+libusb-package
+reportlab
