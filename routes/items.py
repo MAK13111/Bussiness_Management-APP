@@ -309,32 +309,33 @@ def barcode_lookup():
     code = (request.args.get("code") or "").strip()
     if not code:
         return jsonify({"status": "not_found", "message": "Code required."}), 400
-    try:
-        code_int = int(code)
-    except ValueError:
-        return jsonify({"status": "not_found", "message": "Invalid barcode."}), 400
 
-    if abs(code_int) > _BIGINT_MAX:
+    # If the input contains any non-numeric character → skip purchase_item and
+    # old_data.barcode entirely and go straight to old_data.item_code search.
+    is_pure_numeric = code.lstrip('-').isdigit()
+
+    code_int = None
+    if is_pure_numeric:
+        try:
+            code_int = int(code)
+        except ValueError:
+            is_pure_numeric = False
+
+    if is_pure_numeric and code_int is not None and abs(code_int) > _BIGINT_MAX:
         return jsonify({"status": "not_found", "message": "Barcode not found."}), 404
 
     with get_conn() as conn:
-        bc = conn.execute(
-            _BARCODE_SELECT + " WHERE pi.barcode_no=? AND pi.product_id IS NOT NULL LIMIT 1",
-            (code_int,)
-        ).fetchone()
-        if not bc:
-            # Fallback: check old_data for numeric codes that might exist in old_data
-            # 1. Fast unique index lookup by uniqee_id (instant sub-ms)
-            old_rows = conn.execute(
-                """
-                SELECT * FROM old_data
-                WHERE uniqee_id = ?
-                ORDER BY (remaining > 0) DESC, id ASC
-                """,
+        # ── Purely numeric input: try regular stock barcode first ────────────
+        bc = None
+        if is_pure_numeric and code_int is not None:
+            bc = conn.execute(
+                _BARCODE_SELECT + " WHERE pi.barcode_no=? AND pi.product_id IS NOT NULL LIMIT 1",
                 (code_int,)
-            ).fetchall()
-            # 2. If not found by uniqee_id, check item_code using indexed lowercase trim
-            if not old_rows:
+            ).fetchone()
+
+        if not bc:
+            if not is_pure_numeric:
+                # Non-numeric input: go straight to old_data.item_code
                 old_rows = conn.execute(
                     """
                     SELECT * FROM old_data
@@ -343,6 +344,19 @@ def barcode_lookup():
                     """,
                     (code,)
                 ).fetchall()
+            elif code_int is not None:
+                # Pure numeric: ONLY check old_data.barcode — no item_code fallback
+                old_rows = conn.execute(
+                    """
+                    SELECT * FROM old_data
+                    WHERE barcode = ?
+                    ORDER BY (remaining > 0) DESC, id ASC
+                    """,
+                    (code_int,)
+                ).fetchall()
+            else:
+                old_rows = []
+
             if old_rows:
                 distinct_sell_prices = {float(r["sell_mrp"] or 0) for r in old_rows}
                 distinct_buy_prices = {float(r["buy_mrp"] or 0) for r in old_rows}
@@ -352,6 +366,7 @@ def barcode_lookup():
                     {
                         "id": r["id"],
                         "uniqee_id": r["uniqee_id"] if "uniqee_id" in r else r.get("uniqee_id"),
+                        "barcode": r.get("barcode"),
                         "code": r["item_code"],
                         "purchase_item_id": r["id"],
                         "item": r["item_code"],
@@ -424,13 +439,18 @@ _SOLD_BARCODE_SELECT = """
 @items_bp.route("/api/barcode_lookup_sold", methods=["GET"])
 def barcode_lookup_sold():
     code = (request.args.get("code") or "").strip()
+
+    # Pure-numeric check: non-numeric input skips purchase_item + old_data.barcode
+    is_pure_numeric = code.lstrip('-').isdigit() if code else False
     try:
-        code_int = int(code)
+        code_int = int(code) if is_pure_numeric else None
     except (TypeError, ValueError):
         code_int = None
+        is_pure_numeric = False
+
     with get_conn() as conn:
         bc = None
-        if code_int is not None:
+        if is_pure_numeric and code_int is not None:
             bc = conn.execute(
                 _SOLD_BARCODE_SELECT + """
                     WHERE pi.barcode_no=? AND pi.product_id IS NOT NULL
@@ -439,20 +459,21 @@ def barcode_lookup_sold():
                 (code_int,)
             ).fetchone()
         if not bc:
-            # Fallback: Check old_data sold items by uniqee_id / product_id or item_code
             od_si = None
-            if code_int is not None:
+            if is_pure_numeric and code_int is not None:
+                # Numeric input: check old_data.barcode column only
                 od_si = conn.execute("""
-                    SELECT si.*, od.uniqee_id, od.item_code
+                    SELECT si.*, od.uniqee_id, od.barcode, od.item_code
                     FROM sold_items si
-                    LEFT JOIN old_data od ON (od.uniqee_id = si.product_id OR od.id = si.product_id)
-                    WHERE si.is_old = 1 AND (si.product_id = ? OR od.uniqee_id = ? OR od.id = ?)
+                    LEFT JOIN old_data od ON (od.id = si.product_id OR od.uniqee_id = si.product_id)
+                    WHERE si.is_old = 1 AND od.barcode = ?
                     ORDER BY si.sold_item_id DESC
                     LIMIT 1
-                """, (code_int, code_int, code_int)).fetchone()
-            if not od_si and code:
+                """, (code_int,)).fetchone()
+            elif code:
+                # Non-numeric input: check item_code directly
                 od_si = conn.execute("""
-                    SELECT si.*, od.uniqee_id, od.item_code
+                    SELECT si.*, od.uniqee_id, od.barcode, od.item_code
                     FROM sold_items si
                     LEFT JOIN old_data od ON (od.uniqee_id = si.product_id OR od.id = si.product_id)
                     WHERE si.is_old = 1 AND (LOWER(TRIM(od.item_code)) = LOWER(TRIM(?)) OR LOWER(TRIM(si.item_name)) = LOWER(TRIM(?)))
@@ -476,10 +497,11 @@ def barcode_lookup_sold():
                     }
                 })
 
+            # od_exists: only for numeric (barcode match) or non-numeric (item_code match)
             od_exists = None
-            if code_int is not None:
-                od_exists = conn.execute("SELECT * FROM old_data WHERE uniqee_id = ? OR id = ?", (code_int, code_int)).fetchone()
-            if not od_exists and code:
+            if is_pure_numeric and code_int is not None:
+                od_exists = conn.execute("SELECT * FROM old_data WHERE barcode = ? LIMIT 1", (code_int,)).fetchone()
+            elif code:
                 od_exists = conn.execute("SELECT * FROM old_data WHERE LOWER(TRIM(item_code)) = LOWER(TRIM(?)) ORDER BY id ASC LIMIT 1", (code,)).fetchone()
             if od_exists:
                 return jsonify({
@@ -822,25 +844,21 @@ def old_data_lookup():
                 code_num = int(code)
             except (ValueError, TypeError):
                 pass
-            if code_num is not None:
+
+            is_pure_numeric = code.lstrip('-').isdigit() if code else False
+
+            if is_pure_numeric and code_num is not None:
+                # Numeric input: ONLY check old_data.barcode — no item_code fallback
                 rows = conn.execute(
                     """
                     SELECT * FROM old_data
-                    WHERE uniqee_id = ?
+                    WHERE barcode = ?
                     ORDER BY (remaining > 0) DESC, id ASC
                     """,
                     (code_num,)
                 ).fetchall()
-                if not rows:
-                    rows = conn.execute(
-                        """
-                        SELECT * FROM old_data
-                        WHERE LOWER(TRIM(item_code)) = LOWER(TRIM(?))
-                        ORDER BY (remaining > 0) DESC, id ASC
-                        """,
-                        (code,)
-                    ).fetchall()
             else:
+                # Non-numeric input: go straight to item_code search
                 rows = conn.execute(
                     """
                     SELECT * FROM old_data
@@ -861,6 +879,7 @@ def old_data_lookup():
             {
                 "id": r["id"],
                 "uniqee_id": r["uniqee_id"] if "uniqee_id" in r else r.get("uniqee_id"),
+                "barcode": r.get("barcode"),
                 "code": r["item_code"],
                 "purchase_item_id": r["id"],      # old_data.id — used as group key in cart
                 "item": r["item_code"],
@@ -935,12 +954,12 @@ def api_get_old_data():
     with get_conn() as conn:
         if search:
             total = conn.execute(
-                "SELECT COUNT(*) AS cnt FROM old_data WHERE item_code ILIKE ? OR CAST(uniqee_id AS TEXT) ILIKE ?",
-                (f"%{search}%", f"%{search}%")
+                "SELECT COUNT(*) AS cnt FROM old_data WHERE item_code ILIKE ? OR CAST(uniqee_id AS TEXT) ILIKE ? OR CAST(barcode AS TEXT) ILIKE ?",
+                (f"%{search}%", f"%{search}%", f"%{search}%")
             ).fetchone()["cnt"]
             rows = conn.execute(
-                "SELECT * FROM old_data WHERE item_code ILIKE ? OR CAST(uniqee_id AS TEXT) ILIKE ? ORDER BY id ASC LIMIT ? OFFSET ?",
-                (f"%{search}%", f"%{search}%", limit, offset)
+                "SELECT * FROM old_data WHERE item_code ILIKE ? OR CAST(uniqee_id AS TEXT) ILIKE ? OR CAST(barcode AS TEXT) ILIKE ? ORDER BY id ASC LIMIT ? OFFSET ?",
+                (f"%{search}%", f"%{search}%", f"%{search}%", limit, offset)
             ).fetchall()
         else:
             total = conn.execute("SELECT COUNT(*) AS cnt FROM old_data").fetchone()["cnt"]
@@ -955,8 +974,8 @@ def api_get_old_data():
                 "SELECT COALESCE(SUM(remaining), 0) AS qty, "
                 "COALESCE(SUM(remaining * buy_mrp), 0) AS val, "
                 "COALESCE(SUM(remaining * (sell_mrp - buy_mrp)), 0) AS margin "
-                "FROM old_data WHERE item_code ILIKE ? OR CAST(uniqee_id AS TEXT) ILIKE ?",
-                (f"%{search}%", f"%{search}%")
+                "FROM old_data WHERE item_code ILIKE ? OR CAST(uniqee_id AS TEXT) ILIKE ? OR CAST(barcode AS TEXT) ILIKE ?",
+                (f"%{search}%", f"%{search}%", f"%{search}%")
             ).fetchone()
         else:
             agg = conn.execute(
@@ -970,6 +989,7 @@ def api_get_old_data():
             {
                 "id": r["id"],
                 "uniqee_id": r.get("uniqee_id"),
+                "barcode": r.get("barcode"),
                 "item_code": r["item_code"],
                 "size": r.get("size") or "",
                 "buy_mrp": float(r["buy_mrp"]),

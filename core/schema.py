@@ -123,6 +123,11 @@ def migrate_schema():
         "ALTER TABLE sold_items ADD COLUMN IF NOT EXISTS actual_price NUMERIC(18,2) DEFAULT 0",
         "CREATE INDEX IF NOT EXISTS idx_purchase_item_barcode ON purchase_item(barcode_no)",
         "CREATE INDEX IF NOT EXISTS idx_old_data_item_code_trim ON old_data(LOWER(TRIM(item_code)))",
+        # Add Barcode column to old_data (new column from updated Excel)
+        "ALTER TABLE old_data ADD COLUMN IF NOT EXISTS barcode BIGINT",
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_old_data_barcode ON old_data(barcode) WHERE barcode IS NOT NULL",
+        # Force re-import so the new barcode column gets populated from the updated Excel file
+        "UPDATE app_state SET old_data_exact_imported = FALSE WHERE id = 1 AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'old_data' AND column_name = 'barcode')",
     ]
 
     with get_conn() as conn:
@@ -221,6 +226,7 @@ def run_background_startup_tasks():
 
         # ── Old data & Barcodes ─────────────────────────────────────────────
         "CREATE UNIQUE INDEX IF NOT EXISTS idx_old_data_uniqee_id ON old_data(uniqee_id)",
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_old_data_barcode ON old_data(barcode) WHERE barcode IS NOT NULL",
         "CREATE INDEX IF NOT EXISTS idx_old_data_item_code ON old_data(LOWER(item_code))",
         "CREATE INDEX IF NOT EXISTS idx_old_data_item_code_trim ON old_data(LOWER(TRIM(item_code)))",
         "CREATE INDEX IF NOT EXISTS idx_purchase_item_barcode ON purchase_item(barcode_no)",
@@ -270,7 +276,7 @@ def import_old_data_if_needed(force=False):
     Updates the Excel file if these columns are missing, and writes them to PostgreSQL.
 
     The xlsx file is expected at: <project_root>/Old_Data/old_purchase_data.xlsx
-    Columns: Uniqee_ID | ItemCode | Size | Purchase MRP | Sale MRP | Remaining Pieces | Sold Pieces | Is_return
+    Columns: Uniqee_ID | ItemCode | Size | Purchase MRP | Sale MRP | Remaining Pieces | Sold Pieces | Barcode | Is_return
     """
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     xlsx_path = os.path.join(project_root, "Old_Data", "old_purchase_data.xlsx")
@@ -288,8 +294,12 @@ def import_old_data_if_needed(force=False):
             "SELECT 1 FROM information_schema.columns "
             "WHERE table_name = 'old_data' AND column_name = 'uniqee_id'"
         ).fetchone()
+        has_barcode_col = conn.execute(
+            "SELECT 1 FROM information_schema.columns "
+            "WHERE table_name = 'old_data' AND column_name = 'barcode'"
+        ).fetchone()
 
-        if state and state["exact_done"] and has_uniqee_col and not force:
+        if state and state["exact_done"] and has_uniqee_col and has_barcode_col and not force:
             print("[old_data] Exact xlsx import already done — skipping.")
             return
 
@@ -366,19 +376,20 @@ def import_old_data_if_needed(force=False):
 
         idx_uniqee    = _col("uniqee")
         idx_code      = result if (result := _col("itemcode"))   is not None else 1
-        # Positional fallbacks assume the NEW 8-column layout:
+        # Positional fallbacks assume the NEW 9-column layout:
         #   0:Uniqee_ID  1:ItemCode  2:Size  3:Purchase MRP  4:Sale MRP
-        #   5:Remaining  6:Sold  7:Is_return
+        #   5:Remaining  6:Sold  7:Barcode  8:Is_return
         # If the expected layout changes again, update these defaults AND the docstring together.
         idx_size      = _col("size")  # optional — None if column absent (old xlsx without Size)
         idx_buy       = result if (result := _col("purchase"))   is not None else 3  # was 2 pre-size
         idx_sell      = result if (result := _col("sale"))       is not None else 4  # was 3
         idx_remaining = result if (result := _col("remaining"))  is not None else 5  # was 4
         idx_sold      = result if (result := _col("sold"))       is not None else 6  # was 5
+        idx_barcode   = result if (result := _col("barcode"))    is not None else None  # new column
         idx_return    = result if (result := _col("return"))     is not None else (len(header) - 1)
 
         # Step 3: Recreate old_data table in Postgres to ensure exact column order
-        # First column: uniqee_id, Last column: is_return
+        # First column: uniqee_id, Last column: is_return. barcode is a dedicated scan column.
         conn.execute("DROP TABLE IF EXISTS old_data CASCADE")
         conn.execute("""
             CREATE TABLE old_data (
@@ -390,11 +401,13 @@ def import_old_data_if_needed(force=False):
                 sell_mrp      NUMERIC(18,2) DEFAULT 0,
                 remaining     NUMERIC(18,2) DEFAULT 0,
                 sold          NUMERIC(18,2) DEFAULT 0,
+                barcode       BIGINT,
                 imported_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 is_return     SMALLINT DEFAULT 0
             )
         """)
         conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_old_data_uniqee_id ON old_data(uniqee_id)")
+        conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_old_data_barcode ON old_data(barcode) WHERE barcode IS NOT NULL")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_old_data_item_code ON old_data(LOWER(item_code))")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_old_data_item_code_trim ON old_data(LOWER(TRIM(item_code)))")
         conn.commit()
@@ -417,7 +430,7 @@ def import_old_data_if_needed(force=False):
 
         inserted = 0
         skipped  = 0
-        batch    = []  # list of tuples: (uniqee_id, item_code, size, buy_mrp, sell_mrp, remaining, sold, is_return)
+        batch    = []  # list of tuples: (uniqee_id, item_code, size, buy_mrp, sell_mrp, remaining, sold, barcode, is_return)
         BATCH_SIZE = 1000
         fallback_uniqee_id = 10001
 
@@ -429,11 +442,12 @@ def import_old_data_if_needed(force=False):
             _extras.execute_values(
                 raw_cur,
                 """
-                INSERT INTO old_data (uniqee_id, item_code, size, buy_mrp, sell_mrp, remaining, sold, is_return)
+                INSERT INTO old_data (uniqee_id, item_code, size, buy_mrp, sell_mrp, remaining, sold, barcode, is_return)
                 VALUES %s
+                ON CONFLICT DO NOTHING
                 """,
                 rows_to_insert,
-                template="(%s, %s, %s, %s, %s, %s, %s, %s)"
+                template="(%s, %s, %s, %s, %s, %s, %s, %s, %s)"
             )
             conn.commit()
 
@@ -459,11 +473,19 @@ def import_old_data_if_needed(force=False):
                 remaining = _safe_float(row_cells[idx_remaining]) if idx_remaining < len(row_cells) else 0.0
                 sold      = _safe_float(row_cells[idx_sold]) if idx_sold < len(row_cells) else 0.0
 
+                # Read Barcode column — None if absent in this xlsx
+                barcode_val = None
+                if idx_barcode is not None and idx_barcode < len(row_cells) and row_cells[idx_barcode] is not None:
+                    try:
+                        barcode_val = int(row_cells[idx_barcode])
+                    except (ValueError, TypeError):
+                        barcode_val = None
+
                 is_ret = 0
                 if idx_return is not None and idx_return < len(row_cells) and row_cells[idx_return] is not None:
                     is_ret = _safe_int(row_cells[idx_return], 0)
 
-                batch.append((u_id, item_code, size_val, buy_mrp, sell_mrp, remaining, sold, is_ret))
+                batch.append((u_id, item_code, size_val, buy_mrp, sell_mrp, remaining, sold, barcode_val, is_ret))
                 inserted += 1
                 if len(batch) >= BATCH_SIZE:
                     _flush(batch)
